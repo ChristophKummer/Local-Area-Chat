@@ -1,15 +1,22 @@
 using System.Windows;
+using Local_Area_Chat.Models;
+using Local_Area_Chat.Data;
 
 namespace Local_Area_Chat.Dialogs
 {
     public partial class EditMessageDialog : Window
     {
-        public string NewContent { get; private set; }
+        public string? NewContent { get; private set; }
         public EditMessageDialog(string oldContent)
         {
             InitializeComponent();
             // TextBox mit oldContent vorbelegen
         }
-        // OK-Button setzt NewContent und schlieﬂt Dialog
+        private void OkButton_Click(object sender, RoutedEventArgs e)
+        {
+            NewContent = ContentTextBox.Text;
+            DialogResult = true;
+            Close();
+        }
     }
 }

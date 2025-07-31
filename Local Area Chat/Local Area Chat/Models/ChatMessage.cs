@@ -1,7 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
-using Local_Area_Chat.Models;
 
 namespace Local_Area_Chat.Models
 {

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Windows.Controls;
+using Local_Area_Chat.Data;
+using Local_Area_Chat.Models;
 
 namespace Local_Area_Chat.MVP
 {

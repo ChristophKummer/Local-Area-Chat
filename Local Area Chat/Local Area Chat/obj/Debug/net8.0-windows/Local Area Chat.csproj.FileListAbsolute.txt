@@ -27,3 +27,5 @@ C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.genruntimeconfig.cache
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\ref\Local Area Chat.dll
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.sourcelink.json
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\EditMessageDialog.baml
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\EditMessageDialog.g.cs

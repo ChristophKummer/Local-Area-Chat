@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Local_Area_Chat.Data;
+using Local_Area_Chat.Models;
 
 namespace Local_Area_Chat.MVP
 {
@@ -60,9 +62,14 @@ namespace Local_Area_Chat.MVP
 
         private async Task LoadMessages(string chatId)
         {
-            var messages = await _repository.GetMessagesByChatIdAsync(chatId);
-            if (messages != null)
-                view.SetMessages(messages);
+            var chatMessages = await _repository.GetMessagesAsync(chatId);
+            if (chatMessages != null)
+            {
+                var messageStrings = new List<string>();
+                foreach (var msg in chatMessages)
+                    messageStrings.Add($"{msg.User}: {msg.Content} ({msg.Timestamp:g})");
+                view.SetMessages(messageStrings);
+            }
         }
     }
 }

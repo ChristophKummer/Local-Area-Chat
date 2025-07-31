@@ -1,6 +1,6 @@
-﻿using Local_Area_Chat.Data; // Namespace für das Repository
-using Local_Area_Chat.Dialogs; // Falls du sie in Dialogs ablegst
+﻿using Local_Area_Chat.Dialogs; // Falls du sie in Dialogs ablegst
 using Local_Area_Chat.MVP;
+using Local_Area_Chat.Data;
 using Local_Area_Chat.Models;
 using System;
 using System.Collections.Generic;
@@ -11,6 +11,14 @@ using System.Windows.Threading;
 
 namespace Local_Area_Chat
 {
+
+    //Setup für docker von Video
+    //https://www.youtube.com/watch?v=gFjpv-nZO0U&t=7s
+    //docker run -d --name Local-Area-Chat -e MONGOINITDB_USERNAME=Admin -e MONGOINITDB_PASSWORD=ADMIN -p 27017:27017 mongo
+    //Username: Admin
+    //Password: Admin
+    //Port: 27017:27017
+
     public partial class MainWindow : Window, IMainView
     {
         private MainPresenter presenter;
@@ -130,15 +138,18 @@ namespace Local_Area_Chat
 
         private void EditMessage_Click(object sender, RoutedEventArgs e)
         {
-            var selected = MessagesListBox.SelectedItem as ChatMessage;
-            if (selected != null)
+            // Prüfe, ob ein Item ausgewählt ist
+            var selected = MessagesListBox.SelectedItem;
+            if (selected == null)
+                return;
+
+            // Wenn nur Strings verwendet werden:
+            string oldContent = selected.ToString();
+            var dialog = new EditMessageDialog(oldContent);
+            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.NewContent))
             {
-                // Zeige Eingabefeld für neuen Text (z.B. Dialog)
-                var dialog = new EditMessageDialog(selected.Content);
-                if (dialog.ShowDialog() == true)
-                {
-                    presenter.OnEditMessage(selected, dialog.NewContent);
-                }
+                // Hier die Nachricht aktualisieren (z.B. in der Datenbank oder Liste)
+                // Beispiel: messages[chatroom].Update(index, dialog.NewContent);
             }
         }
     }
