@@ -1,0 +1,16 @@
+﻿using System.Collections.Generic;
+using System.Windows.Controls;
+using Local_Area_Chat.Data;
+using Local_Area_Chat.Models;
+
+namespace Local_Area_Chat.MVP
+{
+    public interface IMainView
+    {
+        void SetChatrooms(List<string> chatrooms);
+        void SetMessages(List<string> messages);
+        string GetMessageInput();
+        void ClearMessageInput();
+        int GetSelectedChatroomIndex();
+    }
+}

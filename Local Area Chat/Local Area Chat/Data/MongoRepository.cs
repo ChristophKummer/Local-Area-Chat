@@ -1,0 +1,175 @@
+using Local_Area_Chat.Models;
+using MongoDB.Driver;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+
+namespace Local_Area_Chat.Data
+{
+    public class MongoRepository
+    {
+        private readonly IMongoCollection<Chat> _chats;
+        private readonly IMongoCollection<Message> _messages;
+        private readonly IMongoCollection<User> _users;
+
+        public MongoRepository(string connectionString, string dbName)
+        {
+            var client = new MongoClient(connectionString);
+            var database = client.GetDatabase(dbName);
+            
+            // Teste die Verbindung durch eine einfache Operation
+            try
+            {
+                database.RunCommand<MongoDB.Bson.BsonDocument>(new MongoDB.Bson.BsonDocument("ping", 1));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"MongoDB-Verbindung fehlgeschlagen: {ex.Message}", ex);
+            }
+            
+            _chats = database.GetCollection<Chat>("Chat");
+            _messages = database.GetCollection<Message>("Message");
+            _users = database.GetCollection<User>("User");
+        }
+
+        // Chat-Methoden
+        public async Task<List<Chat>> GetAllChatsAsync() =>
+            await _chats.Find(_ => true).ToListAsync();
+
+        public async Task<List<Chat>> GetChatsByUserIdAsync(string userId) =>
+            await _chats.Find(c => c.UserIds.Contains(userId)).ToListAsync();
+
+        public async Task<Chat?> GetChatByIdAsync(string chatId) =>
+            await _chats.Find(c => c.ChatId == chatId).FirstOrDefaultAsync();
+
+        public async Task AddChatAsync(Chat chat) =>
+            await _chats.InsertOneAsync(chat);
+
+        public async Task UpdateChatAsync(Chat chat) =>
+            await _chats.ReplaceOneAsync(c => c.Id == chat.Id, chat);
+
+        public async Task AddUserToChatAsync(string chatId, string userId)
+        {
+            var filter = Builders<Chat>.Filter.Eq(c => c.ChatId, chatId);
+            var update = Builders<Chat>.Update.AddToSet(c => c.UserIds, userId);
+            await _chats.UpdateOneAsync(filter, update);
+        }
+
+        public async Task RemoveUserFromChatAsync(string chatId, string userId)
+        {
+            var filter = Builders<Chat>.Filter.Eq(c => c.ChatId, chatId);
+            var update = Builders<Chat>.Update.Pull(c => c.UserIds, userId);
+            await _chats.UpdateOneAsync(filter, update);
+        }
+
+        // Message-Methoden
+        public async Task<List<Message>> GetMessagesByChatIdAsync(string chatId) =>
+            await _messages.Find(m => m.ChatId == chatId).SortBy(m => m.Timestamp).ToListAsync();
+
+        public async Task AddMessageAsync(Message message) =>
+            await _messages.InsertOneAsync(message);
+
+        public async Task UpdateMessageAsync(Message message) =>
+            await _messages.ReplaceOneAsync(m => m.Id == message.Id, message);
+
+        // User-Methoden
+        public async Task<User?> GetUserByIdAsync(string userId) =>
+            await _users.Find(u => u.UserId == userId).FirstOrDefaultAsync();
+
+        public async Task<User?> GetUserByUsernameAsync(string username) =>
+            await _users.Find(u => u.UserName.ToLower() == username.ToLower()).FirstOrDefaultAsync();
+
+        public async Task<bool> IsUsernameAvailableAsync(string username)
+        {
+            var existingUser = await GetUserByUsernameAsync(username);
+            return existingUser == null;
+        }
+
+        public async Task<User> CreateUserAsync(string username, string password)
+        {
+            // Generate unique user ID
+            var userId = $"user_{Guid.NewGuid().ToString("N")[..8]}";
+            
+            // Generate a secure public key automatically
+            var publicKey = $"pubkey_{Guid.NewGuid().ToString("N")[..16]}_{username.ToLower()}";
+            
+            var newUser = new User
+            {
+                UserId = userId,
+                UserName = username,
+                UserPassword = password,
+                UserPublicKey = publicKey
+            };
+
+            await _users.InsertOneAsync(newUser);
+            return newUser;
+        }
+
+        public async Task AddUserAsync(User user) =>
+            await _users.InsertOneAsync(user);
+
+        public async Task UpdateUserAsync(User user) =>
+            await _users.ReplaceOneAsync(u => u.Id == user.Id, user);
+
+        // Beispieldaten erstellen
+        public async Task CreateSampleDataAsync()
+        {
+            // Prüfe ob bereits Daten vorhanden sind
+            var existingUsers = await _users.CountDocumentsAsync(_ => true);
+            if (existingUsers > 0) return; // Bereits Daten vorhanden
+
+            // Erstelle nur Standard-Chats, keine Test-Benutzer mehr
+            // Benutzer werden jetzt über die Registrierung erstellt
+
+            // 1. Standard-Chats erstellen
+            var chats = new List<Chat>
+            {
+                new Chat 
+                { 
+                    ChatId = "general", 
+                    ChatName = "Allgemein", 
+                    UserIds = new List<string>() // Leer beginnen, Benutzer werden bei Registrierung hinzugefügt
+                },
+                new Chat 
+                { 
+                    ChatId = "tech", 
+                    ChatName = "Technik & Entwicklung", 
+                    UserIds = new List<string>()
+                },
+                new Chat 
+                { 
+                    ChatId = "sports", 
+                    ChatName = "Sport & Fitness", 
+                    UserIds = new List<string>()
+                },
+                new Chat 
+                { 
+                    ChatId = "gaming", 
+                    ChatName = "Gaming Corner", 
+                    UserIds = new List<string>()
+                },
+                new Chat 
+                { 
+                    ChatId = "random", 
+                    ChatName = "Random Talks", 
+                    UserIds = new List<string>()
+                }
+            };
+
+            foreach (var chat in chats)
+            {
+                await _chats.InsertOneAsync(chat);
+            }
+
+            // Keine Beispiel-Nachrichten mehr, da keine Test-Benutzer vorhanden sind
+        }
+
+        // Alle Daten löschen (für Neuerstellung)
+        public async Task ClearAllDataAsync()
+        {
+            await _chats.DeleteManyAsync(_ => true);
+            await _messages.DeleteManyAsync(_ => true);
+            await _users.DeleteManyAsync(_ => true);
+        }
+    }
+}

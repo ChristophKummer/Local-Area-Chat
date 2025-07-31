@@ -1,0 +1,18 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System.Collections.Generic;
+
+namespace Local_Area_Chat.Models
+{
+    public class Chat
+    {
+        [BsonId]
+        public ObjectId Id { get; set; }
+        [BsonElement("chatID")]
+        public string ChatId { get; set; } = "";
+        [BsonElement("chatName")]
+        public string ChatName { get; set; } = "";
+        [BsonElement("userID")]
+        public List<string> UserIds { get; set; } = new List<string>();
+    }
+}
