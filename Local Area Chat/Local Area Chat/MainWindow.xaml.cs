@@ -14,7 +14,7 @@ namespace Local_Area_Chat
 
     //Setup für docker von Video
     //https://www.youtube.com/watch?v=gFjpv-nZO0U&t=7s
-    //docker run -d --name Local-Area-Chat -e MONGOINITDB_USERNAME=Admin -e MONGOINITDB_PASSWORD=ADMIN -p 27017:27017 mongo
+    //docker run -d --name Local-Area-Chat -e MONGOINITDB_USERNAME=Admin -e MONGOINITDB_PASSWORD=Admin -p 27017:27017 mongo
     //Username: Admin
     //Password: Admin
     //Port: 27017:27017
@@ -27,7 +27,7 @@ namespace Local_Area_Chat
         public MainWindow()
         {
             InitializeComponent();
-            presenter = new MainPresenter(this, new MongoChatRepository("mongodb://localhost:27017", "DeineDatenbank"));
+            presenter = new MainPresenter(this, new MongoChatRepository("mongodb://Admin:Admin@localhost:27017", "LocalAreaChat"));
         }
 
         public void SetChatrooms(List<string> chatrooms)
