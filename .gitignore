@@ -1,0 +1,6 @@
+﻿################################################################################
+# Diese .gitignore-Datei wurde von Microsoft(R) Visual Studio automatisch erstellt.
+################################################################################
+
+/Local Area Chat/.vs/Local Area Chat/copilot-chat/52bfdd2f/sessions/00619e47-e925-4b9d-bd3e-6b9b5b93329c
+*.vsidx
