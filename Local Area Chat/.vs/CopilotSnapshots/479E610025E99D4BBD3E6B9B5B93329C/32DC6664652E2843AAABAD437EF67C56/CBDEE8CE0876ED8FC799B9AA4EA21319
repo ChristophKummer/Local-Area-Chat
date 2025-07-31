@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+Ôªøusing System.Collections.Generic;
 
 namespace Local_Area_Chat.MVP
 {
@@ -10,23 +10,19 @@ namespace Local_Area_Chat.MVP
         void ClearMessageInput();
         int GetSelectedChatroomIndex();
         
-        // Login-Funktionalit‰t
+        // Login-Funktionalit√§t
         string GetLoginUsername();
         string GetLoginPassword();
         void ShowLoginError(string message);
         void ShowLoginSuccess(string username);
         void ClearLoginFields();
         
-        // Registration-Funktionalit‰t
+        // Registration-Funktionalit√§t
         void ShowRegistrationError(string message);
         void ShowRegistrationSuccess(string username);
         
-        // User Display-Funktionalit‰t
+        // User Display-Funktionalit√§t
         void SetCurrentUserDisplay(string username);
         void ClearCurrentUserDisplay();
-        
-        // Chat Creation-Funktionalit‰t
-        void ShowNewChatError(string message);
-        void ShowNewChatSuccess(string chatName);
     }
 }
