@@ -110,7 +110,7 @@ namespace Local_Area_Chat
         // User Display-Funktionalität
         public void SetCurrentUserDisplay(string username)
         {
-            CurrentUserTextBlock.Text = $"Angemeldet als: {username}";
+            CurrentUserTextBlock.Text = $"👤 {username}";
             CurrentUserTextBlock.Visibility = Visibility.Visible;
         }
 
@@ -136,9 +136,6 @@ namespace Local_Area_Chat
         private void LoginToggleButton_Click(object sender, RoutedEventArgs e)
         {
             LoginPopup.IsOpen = true;
-            
-            // Set focus to username field when login popup opens
-            UserTextBox.Focus();
         }
 
         private void LoginPopup_MouseLeave(object sender, MouseEventArgs e)
@@ -239,26 +236,6 @@ namespace Local_Area_Chat
             }
         }
 
-        private void UserTextBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter || e.Key == Key.Tab)
-            {
-                // Move focus to password box
-                PasswordBox.Focus();
-                e.Handled = true;
-            }
-        }
-
-        private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                // Trigger login when Enter is pressed in password field
-                LoginButton_Click(this, new RoutedEventArgs());
-                e.Handled = true;
-            }
-        }
-
         private async void EditMessage_Click(object sender, RoutedEventArgs e)
         {
             var chatroomIndex = GetSelectedChatroomIndex();
@@ -276,16 +253,6 @@ namespace Local_Area_Chat
             if (selectedIndex >= chatMessages.Count) return;
             
             var selectedMessage = chatMessages[selectedIndex];
-
-            // Check if current user can edit this message
-            if (!presenter.CanCurrentUserEditMessage(selectedMessage))
-            {
-                MessageBox.Show("Sie können nur Ihre eigenen Nachrichten bearbeiten.", 
-                              "Bearbeitung nicht erlaubt", 
-                              MessageBoxButton.OK, 
-                              MessageBoxImage.Warning);
-                return;
-            }
 
             var dialog = new EditMessageDialog(selectedMessage.Content);
             if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.NewContent))

@@ -136,9 +136,6 @@ namespace Local_Area_Chat
         private void LoginToggleButton_Click(object sender, RoutedEventArgs e)
         {
             LoginPopup.IsOpen = true;
-            
-            // Set focus to username field when login popup opens
-            UserTextBox.Focus();
         }
 
         private void LoginPopup_MouseLeave(object sender, MouseEventArgs e)

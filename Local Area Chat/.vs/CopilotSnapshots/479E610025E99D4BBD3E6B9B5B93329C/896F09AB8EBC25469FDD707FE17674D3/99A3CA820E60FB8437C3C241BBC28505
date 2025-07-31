@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+Ôªøusing System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using Local_Area_Chat.Data;
@@ -20,7 +20,7 @@ namespace Local_Area_Chat.MVP
             this.view = view;
             this._repository = repository;
             
-            // Pr¸fe ob Repository verf¸gbar ist
+            // Pr√ºfe ob Repository verf√ºgbar ist
             if (_repository != null)
             {
                 // Warte auf Login, bevor Daten geladen werden
@@ -38,18 +38,18 @@ namespace Local_Area_Chat.MVP
             // Zeige Login-Aufforderung
             var loginPrompt = new List<string> 
             { 
-                "Willkommen beim Local Area Chat!",
+                "üëã Willkommen beim Local Area Chat!",
                 "",
                 "Bitte melde dich an oder erstelle einen neuen Account:",
-                "ï Klicke auf das Benutzer-Symbol oben rechts",
-                "ï Gib deine Anmeldedaten ein",
-                "ï Oder erstelle einen neuen Benutzer",
+                "‚Ä¢ Klicke auf das Benutzer-Symbol oben rechts",
+                "‚Ä¢ Gib deine Anmeldedaten ein",
+                "‚Ä¢ Oder erstelle einen neuen Benutzer",
                 "",
-                "Neuen Account erstellen:",
-                "ï Klicke auf 'Neuen Benutzer erstellen'",
-                "ï W‰hle einen eindeutigen Benutzernamen",
-                "ï Erstelle ein sicheres Passwort",
-                "ï Sofort loslegen und chatten!"
+                "üÜï Neuen Account erstellen:",
+                "‚Ä¢ Klicke auf 'Neuen Benutzer erstellen'",
+                "‚Ä¢ W√§hle einen eindeutigen Benutzernamen",
+                "‚Ä¢ Erstelle ein sicheres Passwort",
+                "‚Ä¢ Sofort loslegen und chatten!"
             };
             
             view.SetChatrooms(new List<string> { "Anmeldung erforderlich" });
@@ -62,7 +62,7 @@ namespace Local_Area_Chat.MVP
         {
             if (_repository == null)
             {
-                view.ShowLoginError("Datenbankverbindung nicht verf¸gbar");
+                view.ShowLoginError("Datenbankverbindung nicht verf√ºgbar");
                 return false;
             }
 
@@ -76,11 +76,11 @@ namespace Local_Area_Chat.MVP
                 
                 if (user == null)
                 {
-                    view.ShowLoginError($"Benutzer '{username}' nicht gefunden. Mˆchten Sie einen neuen Account erstellen?");
+                    view.ShowLoginError($"Benutzer '{username}' nicht gefunden. M√∂chten Sie einen neuen Account erstellen?");
                     return false;
                 }
 
-                // Pr¸fe Passwort
+                // Pr√ºfe Passwort
                 if (user.UserPassword != password)
                 {
                     view.ShowLoginError("Falsches Passwort");
@@ -95,7 +95,7 @@ namespace Local_Area_Chat.MVP
                 view.ClearLoginFields();
                 view.SetCurrentUserDisplay(user.UserName); // Display logged-in user
 
-                // Lade Chats f¸r den eingeloggten Benutzer
+                // Lade Chats f√ºr den eingeloggten Benutzer
                 await LoadUserChats();
                 
                 return true;
@@ -112,17 +112,17 @@ namespace Local_Area_Chat.MVP
         {
             if (_repository == null)
             {
-                view.ShowRegistrationError("Datenbankverbindung nicht verf¸gbar");
+                view.ShowRegistrationError("Datenbankverbindung nicht verf√ºgbar");
                 return false;
             }
 
             try
             {
-                // Pr¸fe ob Benutzername verf¸gbar ist
+                // Pr√ºfe ob Benutzername verf√ºgbar ist
                 var isAvailable = await _repository.IsUsernameAvailableAsync(username);
                 if (!isAvailable)
                 {
-                    view.ShowRegistrationError($"Der Benutzername '{username}' ist bereits vergeben. Bitte w‰hlen Sie einen anderen.");
+                    view.ShowRegistrationError($"Der Benutzername '{username}' ist bereits vergeben. Bitte w√§hlen Sie einen anderen.");
                     return false;
                 }
 
@@ -137,7 +137,7 @@ namespace Local_Area_Chat.MVP
                 
                 view.SetCurrentUserDisplay(newUser.UserName); // Display registered user
                 
-                // Lade Chats f¸r den neuen Benutzer
+                // Lade Chats f√ºr den neuen Benutzer
                 await LoadUserChats();
                 
                 return true;
@@ -149,7 +149,7 @@ namespace Local_Area_Chat.MVP
             }
         }
 
-        // F¸ge neuen Benutzer zu Standard-Chats hinzu
+        // F√ºge neuen Benutzer zu Standard-Chats hinzu
         private async Task AddUserToDefaultChats(string userId)
         {
             try
@@ -157,10 +157,10 @@ namespace Local_Area_Chat.MVP
                 // Erstelle Sample-Daten falls noch nicht vorhanden
                 await _repository.CreateSampleDataAsync();
                 
-                // Lade alle verf¸gbaren Chats
+                // Lade alle verf√ºgbaren Chats
                 var allChats = await _repository.GetAllChatsAsync();
                 
-                // F¸ge Benutzer zu allgemeinen Chats hinzu
+                // F√ºge Benutzer zu allgemeinen Chats hinzu
                 var generalChats = allChats.Where(c => c.ChatName.Contains("Allgemein") || c.ChatName.Contains("General")).ToList();
                 foreach (var chat in generalChats)
                 {
@@ -170,7 +170,7 @@ namespace Local_Area_Chat.MVP
                     }
                 }
                 
-                // Falls keine Chats vorhanden sind, erstelle Standard-Chats f¸r den Benutzer
+                // Falls keine Chats vorhanden sind, erstelle Standard-Chats f√ºr den Benutzer
                 if (!allChats.Any())
                 {
                     await CreateDefaultChatsForUser(userId);
@@ -178,8 +178,8 @@ namespace Local_Area_Chat.MVP
             }
             catch (Exception ex)
             {
-                // Ignoriere Fehler hier, da die Chats sp‰ter erstellt werden kˆnnen
-                System.Diagnostics.Debug.WriteLine($"Fehler beim Hinzuf¸gen zu Standard-Chats: {ex.Message}");
+                // Ignoriere Fehler hier, da die Chats sp√§ter erstellt werden k√∂nnen
+                System.Diagnostics.Debug.WriteLine($"Fehler beim Hinzuf√ºgen zu Standard-Chats: {ex.Message}");
             }
         }
 
@@ -235,8 +235,8 @@ namespace Local_Area_Chat.MVP
             view.SetChatrooms(fallbackRooms);
             view.SetMessages(new List<string> 
             { 
-                "Offline-Modus aktiv",
-                "MongoDB-Verbindung nicht verf¸gbar",
+                "‚ö†Ô∏è Offline-Modus aktiv",
+                "MongoDB-Verbindung nicht verf√ºgbar",
                 "Nachrichten werden nicht gespeichert",
                 "",
                 "Container neu starten:",
@@ -252,7 +252,7 @@ namespace Local_Area_Chat.MVP
                 // Erstelle Beispieldaten falls noch keine vorhanden
                 await _repository.CreateSampleDataAsync();
                 
-                // Lade Chats f¸r den aktuellen Benutzer
+                // Lade Chats f√ºr den aktuellen Benutzer
                 await LoadUserChats();
             }
             catch (Exception ex)
@@ -268,7 +268,7 @@ namespace Local_Area_Chat.MVP
         {
             try
             {
-                // Lade alle Chats f¸r den aktuellen Benutzer
+                // Lade alle Chats f√ºr den aktuellen Benutzer
                 userChats = await _repository.GetChatsByUserIdAsync(currentUserId);
                 
                 // Falls immer noch keine Chats vorhanden sind, erstelle Standard-Chats
@@ -349,7 +349,7 @@ namespace Local_Area_Chat.MVP
                     // Offline-Modus: Zeige Nachricht lokal an
                     var offlineMessages = new List<string>
                     {
-                        "WARNUNG: Offline-Modus: Nachricht nicht gespeichert",
+                        "‚ö†Ô∏è Offline-Modus: Nachricht nicht gespeichert",
                         $"Du: {msg}",
                         "",
                         "MongoDB-Verbindung erforderlich zum Speichern"
@@ -381,7 +381,7 @@ namespace Local_Area_Chat.MVP
             // Check if current user owns the message
             if (!CanEditMessage(message))
             {
-                view.ShowLoginError("Sie kˆnnen nur Ihre eigenen Nachrichten bearbeiten.");
+                view.ShowLoginError("Sie k√∂nnen nur Ihre eigenen Nachrichten bearbeiten.");
                 return;
             }
 
@@ -419,8 +419,8 @@ namespace Local_Area_Chat.MVP
                     var user = await _repository.GetUserByIdAsync(msg.UserId);
                     var displayName = user?.UserName ?? msg.UserId;
                     
-                    // Add ownership indicator for current user's messages (using text instead of emoji)
-                    var ownershipIndicator = (msg.UserId == currentUserId) ? "[Du] " : "";
+                    // Add ownership indicator for current user's messages
+                    var ownershipIndicator = (msg.UserId == currentUserId) ? "üìù " : "";
                     messageStrings.Add($"{ownershipIndicator}{displayName}: {msg.Content} ({msg.Timestamp:g})");
                 }
                 view.SetMessages(messageStrings);
@@ -432,7 +432,7 @@ namespace Local_Area_Chat.MVP
             return await _repository.GetMessagesByChatIdAsync(chatId);
         }
 
-        // Neue Methoden f¸r Chat-Management
+        // Neue Methoden f√ºr Chat-Management
         public async Task AddUserToChat(string chatId, string userId)
         {
             await _repository.AddUserToChatAsync(chatId, userId);
