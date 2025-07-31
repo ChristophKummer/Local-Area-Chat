@@ -1,4 +1,7 @@
-﻿using Local_Area_Chat.MVP;
+﻿using Local_Area_Chat.Data; // Namespace für das Repository
+using Local_Area_Chat.Dialogs; // Falls du sie in Dialogs ablegst
+using Local_Area_Chat.MVP;
+using Local_Area_Chat.Models;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -16,7 +19,7 @@ namespace Local_Area_Chat
         public MainWindow()
         {
             InitializeComponent();
-            presenter = new MainPresenter(this);
+            presenter = new MainPresenter(this, new MongoChatRepository("mongodb://localhost:27017", "DeineDatenbank"));
         }
 
         public void SetChatrooms(List<string> chatrooms)
@@ -122,6 +125,20 @@ namespace Local_Area_Chat
             {
                 SendButton_Click(null, new RoutedEventArgs());
                 e.Handled = true;
+            }
+        }
+
+        private void EditMessage_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = MessagesListBox.SelectedItem as ChatMessage;
+            if (selected != null)
+            {
+                // Zeige Eingabefeld für neuen Text (z.B. Dialog)
+                var dialog = new EditMessageDialog(selected.Content);
+                if (dialog.ShowDialog() == true)
+                {
+                    presenter.OnEditMessage(selected, dialog.NewContent);
+                }
             }
         }
     }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Local_Area_Chat.MVP
 {
@@ -7,10 +8,12 @@ namespace Local_Area_Chat.MVP
         private readonly IMainView view;
         private List<string> chatrooms = new() { "Allgemein", "Technik", "Sport" };
         private Dictionary<string, List<string>> messages = new();
+        private IRepository _repository;
 
-        public MainPresenter(IMainView view)
+        public MainPresenter(IMainView view, IRepository repository)
         {
             this.view = view;
+            this._repository = repository;
             foreach (var room in chatrooms)
                 messages[room] = new List<string>();
             view.SetChatrooms(chatrooms);
@@ -32,6 +35,34 @@ namespace Local_Area_Chat.MVP
                 view.SetMessages(messages[chatrooms[chatroomIndex]]);
                 view.ClearMessageInput();
             }
+        }
+
+        // Beispielhafte Ergänzung
+        public async void OnSendMessage(string chatId, string user, string content)
+        {
+            var message = new ChatMessage
+            {
+                ChatId = chatId,
+                Timestamp = DateTime.Now,
+                User = user,
+                Content = content
+            };
+            await _repository.AddMessageAsync(message);
+            await LoadMessages(chatId);
+        }
+
+        public async void OnEditMessage(ChatMessage message, string newContent)
+        {
+            message.Content = newContent;
+            await _repository.UpdateMessageAsync(message);
+            await LoadMessages(message.ChatId);
+        }
+
+        private async Task LoadMessages(string chatId)
+        {
+            var messages = await _repository.GetMessagesByChatIdAsync(chatId);
+            if (messages != null)
+                view.SetMessages(messages);
         }
     }
 }
