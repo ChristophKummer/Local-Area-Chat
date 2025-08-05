@@ -2,7 +2,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Collections.Generic;
 
-namespace Local_Area_Chat.Models
+namespace Local_Area_Chat.MVP.Models
 {
     public class Chat
     {
@@ -14,5 +14,9 @@ namespace Local_Area_Chat.Models
         public string ChatName { get; set; } = "";
         [BsonElement("userID")]
         public List<string> UserIds { get; set; } = new List<string>();
+        [BsonElement("adminUserID")]
+        public string AdminUserId { get; set; } = ""; // Administrator of the chat
+        [BsonElement("isPrivate")]
+        public bool IsPrivate { get; set; } = true; // All new chats are private by default
     }
 }

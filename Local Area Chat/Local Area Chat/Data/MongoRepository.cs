@@ -1,8 +1,8 @@
-using Local_Area_Chat.Models;
 using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
+using Local_Area_Chat.MVP.Models;
 
 namespace Local_Area_Chat.Data
 {
@@ -111,65 +111,38 @@ namespace Local_Area_Chat.Data
         public async Task UpdateUserAsync(User user) =>
             await _users.ReplaceOneAsync(u => u.Id == user.Id, user);
 
-        // Beispieldaten erstellen
-        public async Task CreateSampleDataAsync()
-        {
-            // Prüfe ob bereits Daten vorhanden sind
-            var existingUsers = await _users.CountDocumentsAsync(_ => true);
-            if (existingUsers > 0) return; // Bereits Daten vorhanden
-
-            // Erstelle nur Standard-Chats, keine Test-Benutzer mehr
-            // Benutzer werden jetzt über die Registrierung erstellt
-
-            // 1. Standard-Chats erstellen
-            var chats = new List<Chat>
-            {
-                new Chat 
-                { 
-                    ChatId = "general", 
-                    ChatName = "Allgemein", 
-                    UserIds = new List<string>() // Leer beginnen, Benutzer werden bei Registrierung hinzugefügt
-                },
-                new Chat 
-                { 
-                    ChatId = "tech", 
-                    ChatName = "Technik & Entwicklung", 
-                    UserIds = new List<string>()
-                },
-                new Chat 
-                { 
-                    ChatId = "sports", 
-                    ChatName = "Sport & Fitness", 
-                    UserIds = new List<string>()
-                },
-                new Chat 
-                { 
-                    ChatId = "gaming", 
-                    ChatName = "Gaming Corner", 
-                    UserIds = new List<string>()
-                },
-                new Chat 
-                { 
-                    ChatId = "random", 
-                    ChatName = "Random Talks", 
-                    UserIds = new List<string>()
-                }
-            };
-
-            foreach (var chat in chats)
-            {
-                await _chats.InsertOneAsync(chat);
-            }
-
-            // Keine Beispiel-Nachrichten mehr, da keine Test-Benutzer vorhanden sind
-        }
-
         // Alle Daten löschen (für Neuerstellung)
         public async Task ClearAllDataAsync()
         {
             await _chats.DeleteManyAsync(_ => true);
             await _messages.DeleteManyAsync(_ => true);
             await _users.DeleteManyAsync(_ => true);
+        }
+
+        // Administrator-specific methods
+        public async Task<bool> IsUserChatAdminAsync(string chatId, string userId)
+        {
+            var chat = await GetChatByIdAsync(chatId);
+            return chat?.AdminUserId == userId;
+        }
+
+        public async Task UpdateChatAdminAsync(string chatId, string newAdminUserId)
+        {
+            var filter = Builders<Chat>.Filter.Eq(c => c.ChatId, chatId);
+            var update = Builders<Chat>.Update.Set(c => c.AdminUserId, newAdminUserId);
+            await _chats.UpdateOneAsync(filter, update);
+        }
+
+        public async Task<List<User>> GetAllUsersAsync() =>
+            await _users.Find(_ => true).ToListAsync();
+
+        public async Task<List<User>> GetUsersNotInChatAsync(string chatId)
+        {
+            var chat = await GetChatByIdAsync(chatId);
+            if (chat == null) return new List<User>();
+
+            var allUsers = await GetAllUsersAsync();
+            return allUsers.Where(u => !chat.UserIds.Contains(u.UserId)).ToList();
         }
     }
 }

@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 using Local_Area_Chat.Data;
-using Local_Area_Chat.Models;
+using Local_Area_Chat.MVP.Models;
 
 namespace Local_Area_Chat
 {

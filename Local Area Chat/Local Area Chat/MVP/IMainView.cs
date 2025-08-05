@@ -28,5 +28,9 @@ namespace Local_Area_Chat.MVP
         // Chat Creation-Funktionalität
         void ShowNewChatError(string message);
         void ShowNewChatSuccess(string chatName);
+        
+        // Chat Management-Funktionalität
+        void ShowChatManagementError(string message);
+        void ShowChatManagementSuccess(string message);
     }
 }

@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using Local_Area_Chat.Data;
-using Local_Area_Chat.Models;
 using System.Linq;
+using Local_Area_Chat.MVP.Models;
 
 namespace Local_Area_Chat.MVP
 {
@@ -68,9 +68,6 @@ namespace Local_Area_Chat.MVP
 
             try
             {
-                // Erstelle Standard-Chats falls noch keine vorhanden
-                await _repository.CreateSampleDataAsync();
-
                 // Suche Benutzer nach Username (verbesserte Methode)
                 var user = await _repository.GetUserByUsernameAsync(username);
                 
@@ -153,10 +150,7 @@ namespace Local_Area_Chat.MVP
         private async Task AddUserToDefaultChats(string userId)
         {
             try
-            {
-                // Erstelle Sample-Daten falls noch nicht vorhanden
-                await _repository.CreateSampleDataAsync();
-                
+            {              
                 // Lade alle verfügbaren Chats
                 var allChats = await _repository.GetAllChatsAsync();
                 
@@ -248,10 +242,7 @@ namespace Local_Area_Chat.MVP
         private async Task InitializeDataAndLoadChats()
         {
             try
-            {
-                // Erstelle Beispieldaten falls noch keine vorhanden
-                await _repository.CreateSampleDataAsync();
-                
+            {               
                 // Lade Chats für den aktuellen Benutzer
                 await LoadUserChats();
             }
@@ -271,12 +262,12 @@ namespace Local_Area_Chat.MVP
                 // Lade alle Chats für den aktuellen Benutzer
                 userChats = await _repository.GetChatsByUserIdAsync(currentUserId);
                 
-                // Falls immer noch keine Chats vorhanden sind, erstelle Standard-Chats
-                if (!userChats.Any())
-                {
-                    await CreateDefaultChats();
-                    userChats = await _repository.GetChatsByUserIdAsync(currentUserId);
-                }
+                // Add user to public chats automatically if not already added
+                await JoinPublicChats();
+                
+                // Reload chats after potentially joining public chats
+                userChats = await _repository.GetChatsByUserIdAsync(currentUserId);
+
 
                 var chatroomNames = userChats.Select(c => c.ChatName).ToList();
                 view.SetChatrooms(chatroomNames);
@@ -295,36 +286,24 @@ namespace Local_Area_Chat.MVP
             }
         }
 
-        private async Task CreateDefaultChats()
+        // Join public chats automatically
+        private async Task JoinPublicChats()
         {
-            var defaultChats = new List<Chat>
+            try
             {
-                new Chat
+                var allChats = await _repository.GetAllChatsAsync();
+                var publicChats = allChats.Where(c => !c.IsPrivate && !c.UserIds.Contains(currentUserId));
+                
+                foreach (var chat in publicChats)
                 {
-                    ChatId = "Allgemein",
-                    ChatName = "Allgemein",
-                    UserIds = new List<string> { currentUserId }
-                },
-                new Chat
-                {
-                    ChatId = "Technik",
-                    ChatName = "Technik",
-                    UserIds = new List<string> { currentUserId }
-                },
-                new Chat
-                {
-                    ChatId = "Sport",
-                    ChatName = "Sport",
-                    UserIds = new List<string> { currentUserId }
+                    await _repository.AddUserToChatAsync(chat.ChatId, currentUserId);
                 }
-            };
-
-            foreach (var chat in defaultChats)
+            }
+            catch (Exception ex)
             {
-                await _repository.AddChatAsync(chat);
+                System.Diagnostics.Debug.WriteLine($"Fehler beim Beitreten zu öffentlichen Chats: {ex.Message}");
             }
         }
-
         public async void OnChatroomChanged(int index)
         {
             if (index >= 0 && index < userChats.Count)
@@ -333,7 +312,6 @@ namespace Local_Area_Chat.MVP
                 await LoadMessages(chatId);
             }
         }
-
         public void OnSendMessage(int chatroomIndex)
         {
             var msg = view.GetMessageInput();
@@ -478,7 +456,9 @@ namespace Local_Area_Chat.MVP
                 {
                     ChatId = Guid.NewGuid().ToString(),
                     ChatName = chatName,
-                    UserIds = new List<string> { currentUserId }
+                    UserIds = new List<string> { currentUserId },
+                    AdminUserId = currentUserId, // Creator becomes admin
+                    IsPrivate = true // New chats are private by default
                 };
                 
                 await _repository.AddChatAsync(chat);
@@ -492,27 +472,103 @@ namespace Local_Area_Chat.MVP
             }
         }
 
-        // Methode zum Neuerstellen der Beispieldaten
-        public async Task RecreateExampleDataAsync()
+        // Administrator functionality methods
+        public async Task<bool> IsCurrentUserChatAdmin(string chatId)
         {
-            await _repository.ClearAllDataAsync();
-            await _repository.CreateSampleDataAsync();
-            await LoadUserChats();
+            if (_repository == null || string.IsNullOrEmpty(currentUserId))
+                return false;
+
+            return await _repository.IsUserChatAdminAsync(chatId, currentUserId);
+        }
+
+        public async Task<List<User>> GetAvailableUsersForChat(string chatId)
+        {
+            if (_repository == null)
+                return new List<User>();
+
+            return await _repository.GetUsersNotInChatAsync(chatId);
+        }
+
+        public async Task<bool> AddUserToChatAsAdmin(string chatId, string userId)
+        {
+            if (_repository == null)
+                return false;
+
+            // Check if current user is admin of this chat
+            var isAdmin = await IsCurrentUserChatAdmin(chatId);
+            if (!isAdmin)
+                return false;
+
+            try
+            {
+                await _repository.AddUserToChatAsync(chatId, userId);
+                await LoadUserChats(); // Refresh chat list
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> RemoveUserFromChatAsAdmin(string chatId, string userId)
+        {
+            if (_repository == null)
+                return false;
+
+            // Check if current user is admin of this chat
+            var isAdmin = await IsCurrentUserChatAdmin(chatId);
+            if (!isAdmin)
+                return false;
+
+            // Don't allow admin to remove themselves
+            if (userId == currentUserId)
+                return false;
+
+            try
+            {
+                await _repository.RemoveUserFromChatAsync(chatId, userId);
+                await LoadUserChats(); // Refresh chat list
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         // Hilfsmethode zur Anzeige der Benutzer in einem Chat
         public async Task<List<string>> GetChatParticipantsAsync(string chatId)
         {
-            var chat = await _repository.GetChatByIdAsync(chatId);
-            if (chat == null) return new List<string>();
+            if (_repository == null)
+                return new List<string>();
 
-            var participants = new List<string>();
-            foreach (var userId in chat.UserIds)
+            try
             {
-                var user = await _repository.GetUserByIdAsync(userId);
-                participants.Add(user?.UserName ?? userId);
+                var chat = await _repository.GetChatByIdAsync(chatId);
+                if (chat == null) return new List<string>();
+
+                var participants = new List<string>();
+                foreach (var userId in chat.UserIds)
+                {
+                    var user = await _repository.GetUserByIdAsync(userId);
+                    participants.Add(user?.UserName ?? userId);
+                }
+                return participants;
             }
-            return participants;
+            catch
+            {
+                return new List<string>();
+            }
+        }
+
+        // Get ChatId by index for proper admin checks
+        public async Task<string?> GetChatIdByIndex(int index)
+        {
+            if (index < 0 || index >= userChats.Count)
+                return null;
+            
+            return userChats[index].ChatId;
         }
     }
 }

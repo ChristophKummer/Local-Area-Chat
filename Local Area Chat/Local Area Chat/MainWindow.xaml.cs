@@ -1,13 +1,15 @@
 using Local_Area_Chat.Dialogs;
 using Local_Area_Chat.MVP;
 using Local_Area_Chat.Data;
-using Local_Area_Chat.Models;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Linq;
+using System.Threading.Tasks;
+using Local_Area_Chat.MVP.Models;
 
 namespace Local_Area_Chat
 {
@@ -29,6 +31,9 @@ namespace Local_Area_Chat
         public MainWindow()
         {
             InitializeComponent();
+            
+            // Configure MessagesListBox for text wrapping
+            ConfigureMessagesListBox();
             
             try
             {
@@ -58,6 +63,29 @@ namespace Local_Area_Chat
             }
             
             presenter = new MainPresenter(this, repository);
+            
+            // Configure MessagesListBox for text wrapping after initialization
+            ConfigureMessagesListBox();
+        }
+
+        private void ConfigureMessagesListBox()
+        {
+            // Configure the MessagesListBox for text wrapping and disable horizontal scrolling
+            var itemTemplate = new DataTemplate();
+            
+            // Create a TextBlock with TextWrapping
+            var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+            textBlockFactory.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
+            textBlockFactory.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap);
+            textBlockFactory.SetValue(TextBlock.MarginProperty, new Thickness(5, 2, 5, 2));
+            textBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(5));
+            
+            itemTemplate.VisualTree = textBlockFactory;
+            MessagesListBox.ItemTemplate = itemTemplate;
+            
+            // Configure ScrollViewer to disable horizontal scrolling
+            System.Windows.Controls.ScrollViewer.SetHorizontalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Disabled);
+            System.Windows.Controls.ScrollViewer.SetVerticalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Auto);
         }
 
         public void SetChatrooms(List<string> chatrooms)
@@ -71,11 +99,28 @@ namespace Local_Area_Chat
         {
             MessagesListBox.ItemsSource = null;
             MessagesListBox.ItemsSource = messages;
+            
+            // Configure text wrapping if not already configured
+            if (MessagesListBox.ItemTemplate == null)
+            {
+                var itemTemplate = new DataTemplate();
+                var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+                textBlockFactory.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
+                textBlockFactory.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap);
+                textBlockFactory.SetValue(TextBlock.MarginProperty, new Thickness(5, 2, 5, 2));
+                
+                itemTemplate.VisualTree = textBlockFactory;
+                MessagesListBox.ItemTemplate = itemTemplate;
+                
+                // Disable horizontal scrolling
+                System.Windows.Controls.ScrollViewer.SetHorizontalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Disabled);
+                System.Windows.Controls.ScrollViewer.SetVerticalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Auto);
+            }
         }
 
-        public string GetMessageInput() => MessageTextBox.Text;
         public void ClearMessageInput() => MessageTextBox.Text = "";
         public int GetSelectedChatroomIndex() => ChatroomListBox.SelectedIndex;
+        public string GetMessageInput() => MessageTextBox.Text;
 
         public string GetLoginUsername() => UserTextBox.Text;
         public string GetLoginPassword() => PasswordBox.Password;
@@ -131,6 +176,17 @@ namespace Local_Area_Chat
         public void ShowNewChatSuccess(string chatName)
         {
             MessageBox.Show($"Chat '{chatName}' wurde erfolgreich erstellt!", "Neuer Chat", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // Chat Management-Funktionalität
+        public void ShowChatManagementError(string message)
+        {
+            MessageBox.Show(message, "Chat Management Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        public void ShowChatManagementSuccess(string message)
+        {
+            MessageBox.Show(message, "Chat Management", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void ChatroomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -465,6 +521,262 @@ namespace Local_Area_Chat
             inputTextBox.Focus();
 
             return inputWindow.ShowDialog() == true ? inputWindow.Tag?.ToString() ?? "" : "";
+        }
+
+        // Chat management event handlers
+        private async void ManageChat_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0)
+            {
+                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
+                return;
+            }
+
+            try
+            {
+                var chatId = await GetSelectedChatId();
+                if (chatId == null) return;
+
+                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
+                if (!isAdmin)
+                {
+                    ShowChatManagementError("Sie sind nicht der Administrator dieses Chats.");
+                    return;
+                }
+
+                ShowChatManagementSuccess("Sie sind Administrator dieses Chats und können ihn verwalten.");
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Fehler beim Überprüfen der Admin-Rechte: {ex.Message}");
+            }
+        }
+
+        private async void AddUserToChat_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0)
+            {
+                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
+                return;
+            }
+
+            try
+            {
+                var chatId = await GetSelectedChatId();
+                if (chatId == null) return;
+
+                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
+                if (!isAdmin)
+                {
+                    ShowChatManagementError("Nur der Chat-Administrator kann Benutzer hinzufügen.");
+                    return;
+                }
+
+                var availableUsers = await presenter.GetAvailableUsersForChat(chatId);
+                if (!availableUsers.Any())
+                {
+                    ShowChatManagementError("Keine verfügbaren Benutzer zum Hinzufügen gefunden.");
+                    return;
+                }
+
+                var userToAdd = ShowUserSelectionDialog("Benutzer zum Chat hinzufügen", availableUsers);
+                if (userToAdd != null)
+                {
+                    var success = await presenter.AddUserToChatAsAdmin(chatId, userToAdd.UserId);
+                    if (success)
+                    {
+                        ShowChatManagementSuccess($"Benutzer '{userToAdd.UserName}' wurde erfolgreich zum Chat hinzugefügt.");
+                    }
+                    else
+                    {
+                        ShowChatManagementError("Fehler beim Hinzufügen des Benutzers.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Fehler beim Hinzufügen des Benutzers: {ex.Message}");
+            }
+        }
+
+        private async void RemoveUserFromChat_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0)
+            {
+                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
+                return;
+            }
+
+            try
+            {
+                var chatId = await GetSelectedChatId();
+                if (chatId == null) return;
+
+                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
+                if (!isAdmin)
+                {
+                    ShowChatManagementError("Nur der Chat-Administrator kann Benutzer entfernen.");
+                    return;
+                }
+
+                // Simplified implementation - show message for now
+                ShowChatManagementError("Funktion wird implementiert. Verwenden Sie 'Chat-Teilnehmer anzeigen' um die Teilnehmer zu sehen.");
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Fehler beim Entfernen des Benutzers: {ex.Message}");
+            }
+        }
+
+        private async void ShowChatParticipants_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0)
+            {
+                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
+                return;
+            }
+
+            try
+            {
+                var chatId = await GetSelectedChatId();
+                if (chatId == null) return;
+
+                var participants = await presenter.GetChatParticipantsAsync(chatId);
+                var participantsList = string.Join("\n• ", participants);
+                
+                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
+                var adminText = isAdmin ? "\n\n[Sie sind Administrator dieses Chats]" : "";
+                
+                MessageBox.Show($"Chat-Teilnehmer:\n\n• {participantsList}{adminText}", 
+                              "Chat-Teilnehmer", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Fehler beim Laden der Chat-Teilnehmer: {ex.Message}");
+            }
+        }
+
+        private async Task<string?> GetSelectedChatId()
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0) return null;
+
+            // FIXED: Get the actual chat ID from the presenter's chat list
+            return await presenter.GetChatIdByIndex(selectedIndex);
+        }
+
+        private User? ShowUserSelectionDialog(string title, List<User> users)
+        {
+            var selectionWindow = new Window
+            {
+                Title = title,
+                Width = 350,
+                Height = 300,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize
+            };
+
+            var grid = new Grid();
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var promptLabel = new TextBlock
+            {
+                Text = "Wählen Sie einen Benutzer aus:",
+                Margin = new Thickness(20, 20, 20, 10),
+                FontSize = 14
+            };
+            Grid.SetRow(promptLabel, 0);
+
+            var userListBox = new ListBox
+            {
+                Margin = new Thickness(20, 0, 20, 10),
+                DisplayMemberPath = "UserName"
+            };
+            userListBox.ItemsSource = users;
+            Grid.SetRow(userListBox, 1);
+
+            var buttonPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(20, 0, 20, 20)
+            };
+
+            var okButton = new Button
+            {
+                Content = "OK",
+                Width = 75,
+                Height = 25,
+                Margin = new Thickness(0, 0, 10, 0),
+                IsDefault = true
+            };
+
+            var cancelButton = new Button
+            {
+                Content = "Abbrechen",
+                Width = 75,
+                Height = 25,
+                IsCancel = true
+            };
+
+            okButton.Click += (s, e) => {
+                if (userListBox.SelectedItem != null)
+                {
+                    selectionWindow.Tag = userListBox.SelectedItem;
+                    selectionWindow.DialogResult = true;
+                }
+                selectionWindow.Close();
+            };
+
+            cancelButton.Click += (s, e) => {
+                selectionWindow.DialogResult = false;
+                selectionWindow.Close();
+            };
+
+            buttonPanel.Children.Add(okButton);
+            buttonPanel.Children.Add(cancelButton);
+            Grid.SetRow(buttonPanel, 2);
+
+            grid.Children.Add(promptLabel);
+            grid.Children.Add(userListBox);
+            grid.Children.Add(buttonPanel);
+
+            selectionWindow.Content = grid;
+
+            return selectionWindow.ShowDialog() == true ? selectionWindow.Tag as User : null;
+        }
+
+        // FIXED: Proper implementation to get actual ChatId instead of ChatName
+        private async Task<string?> GetSelectedChatIdFixed()
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0) return null;
+
+            // Get the actual chat ID from the presenter's chat list
+            return await presenter.GetChatIdByIndex(selectedIndex);
+        }
+
+        // Configure MessagesListBox for text wrapping
+        private void ConfigureMessagesListBoxForTextWrapping()
+        {
+            var itemTemplate = new DataTemplate();
+            var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+            textBlockFactory.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
+            textBlockFactory.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap);
+            textBlockFactory.SetValue(TextBlock.MarginProperty, new Thickness(5, 2, 5, 2));
+            
+            itemTemplate.VisualTree = textBlockFactory;
+            MessagesListBox.ItemTemplate = itemTemplate;
+            
+            System.Windows.Controls.ScrollViewer.SetHorizontalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Disabled);
+            System.Windows.Controls.ScrollViewer.SetVerticalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Auto);
         }
     }
 }

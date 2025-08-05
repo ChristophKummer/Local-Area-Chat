@@ -2,7 +2,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
 
-namespace Local_Area_Chat.Models
+namespace Local_Area_Chat.MVP.Models
 {
     public class Message
     {
