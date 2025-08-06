@@ -608,18 +608,12 @@ namespace Local_Area_Chat.MVP
             }
         }
 
-        // Diese Methoden sollten NUR EINMAL in der MainPresenter Klasse stehen:
+        // Chat Management Methoden - NUR EINMAL definieren:
 
         public async Task<bool> UpdateChatNameAsync(string chatId, string newName)
         {
             if (_repository == null) return false;
             return await _repository.UpdateChatNameAsync(chatId, newName);
-        }
-
-        public async Task<bool> UpdateChatStatusAsync(string chatId, bool isPrivate)
-        {
-            if (_repository == null) return false;
-            return await _repository.UpdateChatStatusAsync(chatId, isPrivate);
         }
 
         public async Task<User?> GetUserByIdAsync(string userId)
@@ -640,5 +634,13 @@ namespace Local_Area_Chat.MVP
             var user = await _repository.GetUserByUsernameAsync(username);
             return user?.UserId;
         }
+
+        public async Task<Chat?> GetChatByIdAsync(string chatId)
+        {
+            if (_repository == null) return null;
+            return await _repository.GetChatByIdAsync(chatId);
+        }
+
+        // KEINE zweite UpdateChatStatusAsync Methode hier!
     }
 }
