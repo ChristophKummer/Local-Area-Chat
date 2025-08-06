@@ -638,10 +638,6 @@ namespace Local_Area_Chat
                     ShowChatManagementError("Nur der Chat-Administrator kann Benutzer entfernen.");
                     return;
                 }
-
-                // Simplified implementation - show message for now
-                ShowChatManagementError("Funktion wird implementiert. Verwenden Sie 'Chat-Teilnehmer anzeigen' um die Teilnehmer zu sehen.");
-            }
             catch (Exception ex)
             {
                 ShowChatManagementError($"Fehler beim Entfernen des Benutzers: {ex.Message}");
@@ -676,14 +672,6 @@ namespace Local_Area_Chat
                 ShowChatManagementError($"Fehler beim Laden der Chat-Teilnehmer: {ex.Message}");
             }
         }
-
-        private async Task<string?> GetSelectedChatId()
-        {
-            var selectedIndex = GetSelectedChatroomIndex();
-            if (selectedIndex < 0) return null;
-
-            // FIXED: Get the actual chat ID from the presenter's chat list
-            return await presenter.GetChatIdByIndex(selectedIndex);
         }
 
         private User? ShowUserSelectionDialog(string title, List<User> users)
@@ -749,25 +737,6 @@ namespace Local_Area_Chat
                     selectionWindow.Tag = userListBox.SelectedItem;
                     selectionWindow.DialogResult = true;
                 }
-                selectionWindow.Close();
-            };
-
-            cancelButton.Click += (s, e) => {
-                selectionWindow.DialogResult = false;
-                selectionWindow.Close();
-            };
-
-            buttonPanel.Children.Add(okButton);
-            buttonPanel.Children.Add(cancelButton);
-            Grid.SetRow(buttonPanel, 2);
-
-            grid.Children.Add(promptLabel);
-            grid.Children.Add(userListBox);
-            grid.Children.Add(buttonPanel);
-
-            selectionWindow.Content = grid;
-
-            return selectionWindow.ShowDialog() == true ? selectionWindow.Tag as User : null;
         }
 
         // FIXED: Proper implementation to get actual ChatId instead of ChatName
@@ -778,22 +747,6 @@ namespace Local_Area_Chat
 
             // Get the actual chat ID from the presenter's chat list
             return await presenter.GetChatIdByIndex(selectedIndex);
-        }
-
-        // Configure MessagesListBox for text wrapping
-        private void ConfigureMessagesListBoxForTextWrapping()
-        {
-            var itemTemplate = new DataTemplate();
-            var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-            textBlockFactory.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
-            textBlockFactory.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap);
-            textBlockFactory.SetValue(TextBlock.MarginProperty, new Thickness(5, 2, 5, 2));
-            
-            itemTemplate.VisualTree = textBlockFactory;
-            MessagesListBox.ItemTemplate = itemTemplate;
-            
-            System.Windows.Controls.ScrollViewer.SetHorizontalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Disabled);
-            System.Windows.Controls.ScrollViewer.SetVerticalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Auto);
         }
     }
 }
