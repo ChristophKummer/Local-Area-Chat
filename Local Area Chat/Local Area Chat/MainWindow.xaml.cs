@@ -590,20 +590,30 @@ namespace Local_Area_Chat
                         if (deleteSuccess)
                         {
                             ShowChatManagementSuccess("Chat wurde erfolgreich gelöscht.");
+                            
+                            // WICHTIG: Chat-Liste aus der Datenbank neu laden
                             await RefreshChatList();
+                            return;
                         }
                         else
                         {
                             ShowChatManagementError("Fehler beim Löschen des Chats.");
+                            return;
                         }
-                        return;
                     }
+
+                    // Verfolge, ob Änderungen vorgenommen wurden
+                    bool changesApplied = false;
 
                     // Update chat name if changed
                     if (!string.IsNullOrEmpty(dialog.NewChatName) && dialog.NewChatName != chatName)
                     {
                         var nameUpdateSuccess = await presenter.UpdateChatNameAsync(chatId, dialog.NewChatName);
-                        if (!nameUpdateSuccess)
+                        if (nameUpdateSuccess)
+                        {
+                            changesApplied = true;
+                        }
+                        else
                         {
                             ShowChatManagementError("Fehler beim Aktualisieren des Chat-Namens.");
                             return;
@@ -614,7 +624,11 @@ namespace Local_Area_Chat
                     if (dialog.IsPrivate != isPrivate)
                     {
                         var statusUpdateSuccess = await presenter.UpdateChatStatusAsync(chatId, dialog.IsPrivate);
-                        if (!statusUpdateSuccess)
+                        if (statusUpdateSuccess)
+                        {
+                            changesApplied = true;
+                        }
+                        else
                         {
                             ShowChatManagementError("Fehler beim Aktualisieren des Chat-Status.");
                             return;
@@ -624,7 +638,11 @@ namespace Local_Area_Chat
                     // Add new users
                     foreach (var user in dialog.AddedUsers)
                     {
-                        await presenter.AddUserToChatAsAdmin(chatId, user.UserId);
+                        var addSuccess = await presenter.AddUserToChatAsAdmin(chatId, user.UserId);
+                        if (addSuccess)
+                        {
+                            changesApplied = true;
+                        }
                     }
 
                     // Remove users
@@ -633,12 +651,22 @@ namespace Local_Area_Chat
                         var userId = await presenter.GetUserIdByUsername(username);
                         if (userId != null)
                         {
-                            await presenter.RemoveUserFromChatAsAdmin(chatId, userId);
+                            var removeSuccess = await presenter.RemoveUserFromChatAsAdmin(chatId, userId);
+                            if (removeSuccess)
+                            {
+                                changesApplied = true;
+                            }
                         }
                     }
                     
-                    ShowChatManagementSuccess("Chat-Einstellungen wurden erfolgreich aktualisiert.");
-                    await RefreshChatList();
+                    // Nur wenn Änderungen vorgenommen wurden, aktualisiere die UI
+                    if (changesApplied)
+                    {
+                        ShowChatManagementSuccess("Chat-Einstellungen wurden erfolgreich aktualisiert.");
+                        
+                        // WICHTIG: Chat-Liste aus der Datenbank neu laden
+                        await RefreshChatList();
+                    }
                 }
             }
             catch (Exception ex)
@@ -677,10 +705,11 @@ namespace Local_Area_Chat
         {
             try
             {
-                // This will reload the chats and update the UI
-                var currentIndex = GetSelectedChatroomIndex();
-                // The presenter's LoadUserChats method will be called indirectly
-                // through the database update methods
+                if (presenter != null)
+                {
+                    // Lade die Chats für den aktuellen Benutzer neu aus der Datenbank
+                    await presenter.RefreshUserChatsFromDatabase();
+                }
             }
             catch (Exception ex)
             {
@@ -723,6 +752,9 @@ namespace Local_Area_Chat
                     if (success)
                     {
                         ShowChatManagementSuccess($"Benutzer '{userToAdd.UserName}' wurde erfolgreich zum Chat hinzugefügt.");
+                        
+                        // Chat-Liste aktualisieren
+                        await RefreshChatList();
                     }
                     else
                     {

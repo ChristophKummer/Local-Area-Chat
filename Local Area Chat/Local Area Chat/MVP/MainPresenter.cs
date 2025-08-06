@@ -642,5 +642,36 @@ namespace Local_Area_Chat.MVP
         }
 
         // KEINE zweite UpdateChatStatusAsync Methode hier!
+
+        public async Task RefreshUserChatsFromDatabase()
+        {
+            if (_repository == null || string.IsNullOrEmpty(currentUserId))
+                return;
+
+            try
+            {
+                // Lade alle Chats für den aktuellen Benutzer neu aus der Datenbank
+                userChats = await _repository.GetChatsByUserIdAsync(currentUserId);
+                
+                // Aktualisiere die UI mit den neuen Chat-Namen
+                var chatroomNames = userChats.Select(c => c.ChatName).ToList();
+                view.SetChatrooms(chatroomNames);
+                
+                // Wenn Chats vorhanden sind, lade Nachrichten für den ersten Chat
+                // Andernfalls zeige eine leere Nachrichtenliste
+                if (userChats.Any())
+                {
+                    await LoadMessages(userChats[0].ChatId);
+                }
+                else
+                {
+                    view.SetMessages(new List<string> { "Keine Chats verfügbar. Erstellen Sie einen neuen Chat!" });
+                }
+            }
+            catch (Exception ex)
+            {
+                view.SetMessages(new List<string> { $"Fehler beim Laden der Chats: {ex.Message}" });
+            }
+        }
     }
 }
