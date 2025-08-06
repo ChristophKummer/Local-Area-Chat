@@ -119,8 +119,9 @@ namespace Local_Area_Chat
         }
 
         public void ClearMessageInput() => MessageTextBox.Text = "";
-        public int GetSelectedChatroomIndex() => ChatroomListBox.SelectedIndex;
         public string GetMessageInput() => MessageTextBox.Text;
+
+        public int GetSelectedChatroomIndex() => ChatroomListBox.SelectedIndex;
 
         public string GetLoginUsername() => UserTextBox.Text;
         public string GetLoginPassword() => PasswordBox.Password;
@@ -545,11 +546,27 @@ namespace Local_Area_Chat
                     return;
                 }
 
-                ShowChatManagementSuccess("Sie sind Administrator dieses Chats und können ihn verwalten.");
+                // Get current chat information
+                var chatName = ChatroomListBox.SelectedItem?.ToString() ?? "";
+                var participants = await presenter.GetChatParticipantsAsync(chatId);
+                var availableUsers = await presenter.GetAvailableUsersForChat(chatId);
+                
+                // Open chat management dialog
+                var dialog = new Local_Area_Chat.Dialogs.ChatManagementDialog(chatName, true, participants, availableUsers);
+                if (dialog.ShowDialog() == true)
+                {
+                    // Add new users
+                    foreach (var user in dialog.AddedUsers)
+                    {
+                        await presenter.AddUserToChatAsAdmin(chatId, user.UserId);
+                    }
+                    
+                    ShowChatManagementSuccess("Chat-Einstellungen wurden erfolgreich aktualisiert.");
+                }
             }
             catch (Exception ex)
             {
-                ShowChatManagementError($"Fehler beim Überprüfen der Admin-Rechte: {ex.Message}");
+                ShowChatManagementError($"Fehler beim Verwalten des Chats: {ex.Message}");
             }
         }
 
