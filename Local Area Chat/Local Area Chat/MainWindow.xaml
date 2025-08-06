@@ -189,8 +189,6 @@
                 <ListBox.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Chat verwalten" Click="ManageChat_Click"/>
-                        <MenuItem Header="Benutzer hinzufügen" Click="AddUserToChat_Click"/>
-                        <MenuItem Header="Benutzer entfernen" Click="RemoveUserFromChat_Click"/>
                         <Separator/>
                         <MenuItem Header="Chat-Teilnehmer anzeigen" Click="ShowChatParticipants_Click"/>
                     </ContextMenu>
