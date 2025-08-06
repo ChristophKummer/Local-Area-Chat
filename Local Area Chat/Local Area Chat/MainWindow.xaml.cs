@@ -27,6 +27,8 @@ namespace Local_Area_Chat
         private MainPresenter presenter;
         private MongoRepository repository;
         private DispatcherTimer? loginCloseTimer;
+        private DispatcherTimer? messageRefreshTimer; // NEU: Timer für automatische Updates
+        private string? currentChatId; // NEU: Aktuelle Chat-ID verfolgen
 
         public MainWindow()
         {
@@ -66,6 +68,34 @@ namespace Local_Area_Chat
             
             // Configure MessagesListBox for text wrapping after initialization
             ConfigureMessagesListBox();
+            
+            // NEU: Timer für automatische Message-Updates initialisieren
+            InitializeMessageRefreshTimer();
+        }
+
+        // NEU: Timer-Initialisierung
+        private void InitializeMessageRefreshTimer()
+        {
+            messageRefreshTimer = new DispatcherTimer();
+            messageRefreshTimer.Interval = TimeSpan.FromSeconds(3); // Alle 3 Sekunden prüfen
+            messageRefreshTimer.Tick += MessageRefreshTimer_Tick;
+        }
+
+        // NEU: Timer-Event Handler
+        private async void MessageRefreshTimer_Tick(object? sender, EventArgs e)
+        {
+            // Nur aktualisieren wenn ein Chat ausgewählt ist und Benutzer eingeloggt ist
+            if (!string.IsNullOrEmpty(currentChatId) && presenter != null)
+            {
+                try
+                {
+                    await presenter.RefreshCurrentChatMessages(currentChatId);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Fehler beim automatischen Aktualisieren: {ex.Message}");
+                }
+            }
         }
 
         private void ConfigureMessagesListBox()
@@ -159,6 +189,12 @@ namespace Local_Area_Chat
             // Show username next to user icon
             UserNameTextBlock.Text = username;
             UserNameTextBlock.Visibility = Visibility.Visible;
+            
+            // NEU: Timer starten wenn bereits ein Chat ausgewählt ist
+            if (!string.IsNullOrEmpty(currentChatId))
+            {
+                messageRefreshTimer?.Start();
+            }
         }
 
         public void ClearCurrentUserDisplay()
@@ -166,6 +202,10 @@ namespace Local_Area_Chat
             // Hide username next to user icon
             UserNameTextBlock.Text = "";
             UserNameTextBlock.Visibility = Visibility.Collapsed;
+            
+            // NEU: Timer stoppen beim Logout
+            messageRefreshTimer?.Stop();
+            currentChatId = null;
         }
 
         // Chat Creation-Funktionalität
@@ -193,7 +233,29 @@ namespace Local_Area_Chat
         private void ChatroomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (presenter != null)
-                presenter.OnChatroomChanged(GetSelectedChatroomIndex());
+            {
+                var selectedIndex = GetSelectedChatroomIndex();
+                presenter.OnChatroomChanged(selectedIndex);
+
+                // NEU: Aktuelle Chat-ID speichern und Timer starten
+                if (selectedIndex >= 0)
+                {
+                    Task.Run(async () => {
+                        currentChatId = await presenter.GetChatIdByIndex(selectedIndex);
+                        
+                        // Timer nur starten wenn Chat ausgewählt und Benutzer eingeloggt
+                        if (!string.IsNullOrEmpty(currentChatId))
+                        {
+                            Dispatcher.Invoke(() => messageRefreshTimer?.Start());
+                        }
+                    });
+                }
+                else
+                {
+                    currentChatId = null;
+                    messageRefreshTimer?.Stop();
+                }
+            }
 
             SelectedChatroomTextBlock.Text = ChatroomListBox.SelectedItem?.ToString() ?? "";
         }
@@ -908,6 +970,13 @@ namespace Local_Area_Chat
             selectionWindow.Content = grid;
 
             return selectionWindow.ShowDialog() == true ? selectionWindow.Tag as User : null;
+        }
+
+        // NEU: Window Closing Handler
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            messageRefreshTimer?.Stop();
+            base.OnClosing(e);
         }
     }
 }

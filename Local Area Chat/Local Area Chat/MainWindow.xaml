@@ -25,8 +25,8 @@
                 </StackPanel>
                 <Button.ContextMenu>
                     <ContextMenu x:Name="HamburgerMenu">
-                        <MenuItem Header="Einstellungen"/>
-                        <MenuItem Header="Profil" Click="HamburgerMenu_Profile_Click"/>
+                        <!--<MenuItem Header="Einstellungen"/>
+                        <MenuItem Header="Profil" Click="HamburgerMenu_Profile_Click"/> -->
                         <MenuItem Header="Abmelden" Click="HamburgerMenu_Logout_Click"/>
                     </ContextMenu>
                 </Button.ContextMenu>

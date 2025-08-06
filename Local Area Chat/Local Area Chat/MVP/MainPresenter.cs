@@ -385,24 +385,67 @@ namespace Local_Area_Chat.MVP
             return CanEditMessage(message);
         }
 
+        // NEU: Methode zum automatischen Aktualisieren von Nachrichten
+        public async Task RefreshCurrentChatMessages(string chatId)
+        {
+            if (_repository == null || string.IsNullOrEmpty(currentUserId))
+                return;
+
+            try
+            {
+                // Lade aktuelle Nachrichten aus der Datenbank
+                await LoadMessages(chatId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Fehler beim Aktualisieren der Nachrichten: {ex.Message}");
+            }
+        }
+
+        // NEU: Optimierte LoadMessages Methode mit Caching
+        private List<Message> lastLoadedMessages = new();
+
         private async Task LoadMessages(string chatId)
         {
             var chatMessages = await _repository.GetMessagesByChatIdAsync(chatId);
             if (chatMessages != null)
             {
-                var messageStrings = new List<string>();
-                foreach (var msg in chatMessages)
+                // Nur UI aktualisieren wenn sich Nachrichten geändert haben
+                if (!MessagesAreEqual(lastLoadedMessages, chatMessages))
                 {
-                    // Verbesserte Anzeige der Nachrichten mit Benutzernamen
-                    var user = await _repository.GetUserByIdAsync(msg.UserId);
-                    var displayName = user?.UserName ?? msg.UserId;
+                    lastLoadedMessages = new List<Message>(chatMessages);
                     
-                    // Add ownership indicator for current user's messages (using text instead of emoji)
-                    var ownershipIndicator = (msg.UserId == currentUserId) ? "[Du] " : "";
-                    messageStrings.Add($"{ownershipIndicator}{displayName}: {msg.Content} ({msg.Timestamp:g})");
+                    var messageStrings = new List<string>();
+                    foreach (var msg in chatMessages)
+                    {
+                        // Verbesserte Anzeige der Nachrichten mit Benutzernamen
+                        var user = await _repository.GetUserByIdAsync(msg.UserId);
+                        var displayName = user?.UserName ?? msg.UserId;
+                        
+                        // Add ownership indicator for current user's messages
+                        var ownershipIndicator = (msg.UserId == currentUserId) ? "[Du] " : "";
+                        messageStrings.Add($"{ownershipIndicator}{displayName}: {msg.Content} ({msg.Timestamp:g})");
+                    }
+                    view.SetMessages(messageStrings);
                 }
-                view.SetMessages(messageStrings);
             }
+        }
+
+        // NEU: Hilfsmethode zum Vergleichen von Message-Listen
+        private bool MessagesAreEqual(List<Message> list1, List<Message> list2)
+        {
+            if (list1.Count != list2.Count) return false;
+            
+            for (int i = 0; i < list1.Count; i++)
+            {
+                if (list1[i].Id != list2[i].Id || 
+                    list1[i].Content != list2[i].Content || 
+                    list1[i].Timestamp != list2[i].Timestamp)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public async Task<List<Message>> GetMessagesForEdit(string chatId)
