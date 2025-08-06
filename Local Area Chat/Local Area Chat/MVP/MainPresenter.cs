@@ -570,5 +570,75 @@ namespace Local_Area_Chat.MVP
             
             return userChats[index].ChatId;
         }
+
+        // New methods for ChatManagementDialog functionality
+        public async Task<bool> UpdateChatStatusAsync(string chatId, bool isPrivate)
+        {
+            if (_repository == null)
+                return false;
+
+            try
+            {
+                var chat = await _repository.GetChatByIdAsync(chatId);
+                if (chat == null)
+                    return false;
+
+                chat.IsPrivate = isPrivate;
+                
+                // If changing to public, add all users to the chat
+                if (!isPrivate)
+                {
+                    var allUsers = await _repository.GetAllUsersAsync();
+                    foreach (var user in allUsers)
+                    {
+                        if (!chat.UserIds.Contains(user.UserId))
+                        {
+                            chat.UserIds.Add(user.UserId);
+                        }
+                    }
+                }
+
+                await _repository.UpdateChatAsync(chat);
+                await LoadUserChats(); // Refresh chat list
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Diese Methoden sollten NUR EINMAL in der MainPresenter Klasse stehen:
+
+        public async Task<bool> UpdateChatNameAsync(string chatId, string newName)
+        {
+            if (_repository == null) return false;
+            return await _repository.UpdateChatNameAsync(chatId, newName);
+        }
+
+        public async Task<bool> UpdateChatStatusAsync(string chatId, bool isPrivate)
+        {
+            if (_repository == null) return false;
+            return await _repository.UpdateChatStatusAsync(chatId, isPrivate);
+        }
+
+        public async Task<User?> GetUserByIdAsync(string userId)
+        {
+            if (_repository == null) return null;
+            return await _repository.GetUserByIdAsync(userId);
+        }
+
+        public async Task<bool> DeleteChatAsync(string chatId)
+        {
+            if (_repository == null) return false;
+            return await _repository.DeleteChatAsync(chatId);
+        }
+
+        public async Task<string?> GetUserIdByUsername(string username)
+        {
+            if (_repository == null) return null;
+            var user = await _repository.GetUserByUsernameAsync(username);
+            return user?.UserId;
+        }
     }
 }

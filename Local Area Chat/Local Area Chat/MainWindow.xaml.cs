@@ -524,6 +524,26 @@ namespace Local_Area_Chat
             return inputWindow.ShowDialog() == true ? inputWindow.Tag?.ToString() ?? "" : "";
         }
 
+        // DIESE METHODE NUR EINMAL DEFINIEREN!
+        private async Task<string?> GetSelectedChatId()
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0) return null;
+
+            var selectedChatName = ChatroomListBox.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(selectedChatName)) return null;
+
+            // Chat-ID anhand des Chat-Namens aus der Datenbank holen
+            if (presenter != null && repository != null)
+            {
+                var allChats = await repository.GetAllChatsAsync();
+                var chat = allChats.FirstOrDefault(c => c.ChatName == selectedChatName);
+                return chat?.ChatId;
+            }
+
+            return null;
+        }
+
         // Chat management event handlers
         private async void ManageChat_Click(object sender, RoutedEventArgs e)
         {
@@ -547,26 +567,124 @@ namespace Local_Area_Chat
                 }
 
                 // Get current chat information
-                var chatName = ChatroomListBox.SelectedItem?.ToString() ?? "";
+                var chat = await presenter.GetChatByIdAsync(chatId);
+                if (chat == null) return;
+
+                var chatName = chat.ChatName;
+                var isPrivate = chat.IsPrivate;
                 var participants = await presenter.GetChatParticipantsAsync(chatId);
                 var availableUsers = await presenter.GetAvailableUsersForChat(chatId);
                 
-                // Open chat management dialog
-                var dialog = new Local_Area_Chat.Dialogs.ChatManagementDialog(chatName, true, participants, availableUsers);
+                // Get admin name
+                var adminUser = await presenter.GetUserByIdAsync(chat.AdminUserId);
+                var adminName = adminUser?.UserName ?? "Unbekannt";
+                
+                // Open enhanced chat management dialog
+                var dialog = new ChatManagementDialog(chatName, isPrivate, participants, availableUsers, adminName);
                 if (dialog.ShowDialog() == true)
                 {
+                    // Check if chat should be deleted
+                    if (dialog.DeleteChat)
+                    {
+                        var deleteSuccess = await presenter.DeleteChatAsync(chatId);
+                        if (deleteSuccess)
+                        {
+                            ShowChatManagementSuccess("Chat wurde erfolgreich gelöscht.");
+                            await RefreshChatList();
+                        }
+                        else
+                        {
+                            ShowChatManagementError("Fehler beim Löschen des Chats.");
+                        }
+                        return;
+                    }
+
+                    // Update chat name if changed
+                    if (!string.IsNullOrEmpty(dialog.NewChatName) && dialog.NewChatName != chatName)
+                    {
+                        var nameUpdateSuccess = await presenter.UpdateChatNameAsync(chatId, dialog.NewChatName);
+                        if (!nameUpdateSuccess)
+                        {
+                            ShowChatManagementError("Fehler beim Aktualisieren des Chat-Namens.");
+                            return;
+                        }
+                    }
+                    
+                    // Update status if changed
+                    if (dialog.IsPrivate != isPrivate)
+                    {
+                        var statusUpdateSuccess = await presenter.UpdateChatStatusAsync(chatId, dialog.IsPrivate);
+                        if (!statusUpdateSuccess)
+                        {
+                            ShowChatManagementError("Fehler beim Aktualisieren des Chat-Status.");
+                            return;
+                        }
+                    }
+
                     // Add new users
                     foreach (var user in dialog.AddedUsers)
                     {
                         await presenter.AddUserToChatAsAdmin(chatId, user.UserId);
                     }
+
+                    // Remove users
+                    foreach (var username in dialog.RemovedUsers)
+                    {
+                        var userId = await presenter.GetUserIdByUsername(username);
+                        if (userId != null)
+                        {
+                            await presenter.RemoveUserFromChatAsAdmin(chatId, userId);
+                        }
+                    }
                     
                     ShowChatManagementSuccess("Chat-Einstellungen wurden erfolgreich aktualisiert.");
+                    await RefreshChatList();
                 }
             }
             catch (Exception ex)
             {
                 ShowChatManagementError($"Fehler beim Verwalten des Chats: {ex.Message}");
+            }
+        }
+
+        private async Task<bool> UpdateChatNameInDatabase(string chatId, string newChatName)
+        {
+            try
+            {
+                return await presenter.UpdateChatNameAsync(chatId, newChatName);
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Datenbankfehler beim Aktualisieren des Chat-Namens: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<bool> UpdateChatStatusInDatabase(string chatId, bool isPrivate)
+        {
+            try
+            {
+                return await presenter.UpdateChatStatusAsync(chatId, isPrivate);
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Datenbankfehler beim Aktualisieren des Chat-Status: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task RefreshChatList()
+        {
+            try
+            {
+                // This will reload the chats and update the UI
+                var currentIndex = GetSelectedChatroomIndex();
+                // The presenter's LoadUserChats method will be called indirectly
+                // through the database update methods
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Fehler beim Aktualisieren der Chat-Liste: {ex.Message}");
             }
         }
 
@@ -638,6 +756,9 @@ namespace Local_Area_Chat
                     ShowChatManagementError("Nur der Chat-Administrator kann Benutzer entfernen.");
                     return;
                 }
+
+                ShowChatManagementError("Funktion wird implementiert. Verwenden Sie 'Chat-Teilnehmer anzeigen' um die Teilnehmer zu sehen.");
+            }
             catch (Exception ex)
             {
                 ShowChatManagementError($"Fehler beim Entfernen des Benutzers: {ex.Message}");
@@ -671,7 +792,6 @@ namespace Local_Area_Chat
             {
                 ShowChatManagementError($"Fehler beim Laden der Chat-Teilnehmer: {ex.Message}");
             }
-        }
         }
 
         private User? ShowUserSelectionDialog(string title, List<User> users)
@@ -737,16 +857,25 @@ namespace Local_Area_Chat
                     selectionWindow.Tag = userListBox.SelectedItem;
                     selectionWindow.DialogResult = true;
                 }
-        }
+                selectionWindow.Close();
+            };
 
-        // FIXED: Proper implementation to get actual ChatId instead of ChatName
-        private async Task<string?> GetSelectedChatIdFixed()
-        {
-            var selectedIndex = GetSelectedChatroomIndex();
-            if (selectedIndex < 0) return null;
+            cancelButton.Click += (s, e) => {
+                selectionWindow.DialogResult = false;
+                selectionWindow.Close();
+            };
 
-            // Get the actual chat ID from the presenter's chat list
-            return await presenter.GetChatIdByIndex(selectedIndex);
+            buttonPanel.Children.Add(okButton);
+            buttonPanel.Children.Add(cancelButton);
+            Grid.SetRow(buttonPanel, 2);
+
+            grid.Children.Add(promptLabel);
+            grid.Children.Add(userListBox);
+            grid.Children.Add(buttonPanel);
+
+            selectionWindow.Content = grid;
+
+            return selectionWindow.ShowDialog() == true ? selectionWindow.Tag as User : null;
         }
     }
 }

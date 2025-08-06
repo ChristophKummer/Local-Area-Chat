@@ -62,6 +62,53 @@ namespace Local_Area_Chat.Data
             await _chats.UpdateOneAsync(filter, update);
         }
 
+        public async Task<bool> DeleteChatAsync(string chatId)
+        {
+            try
+            {
+                // Delete all messages in the chat first
+                await _messages.DeleteManyAsync(m => m.ChatId == chatId);
+                
+                // Delete the chat
+                var result = await _chats.DeleteOneAsync(c => c.ChatId == chatId);
+                return result.DeletedCount > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateChatNameAsync(string chatId, string newName)
+        {
+            try
+            {
+                var filter = Builders<Chat>.Filter.Eq(c => c.ChatId, chatId);
+                var update = Builders<Chat>.Update.Set(c => c.ChatName, newName);
+                var result = await _chats.UpdateOneAsync(filter, update);
+                return result.ModifiedCount > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateChatStatusAsync(string chatId, bool isPrivate)
+        {
+            try
+            {
+                var filter = Builders<Chat>.Filter.Eq(c => c.ChatId, chatId);
+                var update = Builders<Chat>.Update.Set(c => c.IsPrivate, isPrivate);
+                var result = await _chats.UpdateOneAsync(filter, update);
+                return result.ModifiedCount > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         // Message-Methoden
         public async Task<List<Message>> GetMessagesByChatIdAsync(string chatId) =>
             await _messages.Find(m => m.ChatId == chatId).SortBy(m => m.Timestamp).ToListAsync();

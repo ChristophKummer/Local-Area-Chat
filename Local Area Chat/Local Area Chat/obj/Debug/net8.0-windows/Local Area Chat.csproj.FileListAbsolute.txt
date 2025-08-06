@@ -1,6 +1,18 @@
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.csproj.AssemblyReference.cache
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\ChatManagementDialog.baml
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\EditMessageDialog.baml
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\MainWindow.baml
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\ChatManagementDialog.g.cs
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\EditMessageDialog.g.cs
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\MainWindow.g.cs
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\App.g.cs
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat_MarkupCompile.cache
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.g.resources
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.AssemblyInfoInputs.cache
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.AssemblyInfo.cs
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.csproj.CoreCompileInputs.cache
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.sourcelink.json
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\Local Area Chat.exe
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\Local Area Chat.deps.json
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\Local Area Chat.runtimeconfig.json
@@ -13,21 +25,9 @@ C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\SharpCompress.dll
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\Snappier.dll
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\ZstdSharp.dll
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.csproj.AssemblyReference.cache
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\MainWindow.baml
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.g.resources
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.AssemblyInfoInputs.cache
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.AssemblyInfo.cs
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.csproj.CoreCompileInputs.cache
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Ar.8690E338.Up2Date
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.dll
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\refint\Local Area Chat.dll
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.pdb
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.genruntimeconfig.cache
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\ref\Local Area Chat.dll
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.sourcelink.json
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\EditMessageDialog.baml
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\EditMessageDialog.g.cs
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\ChatManagementDialog.baml
-C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Dialogs\ChatManagementDialog.g.cs
