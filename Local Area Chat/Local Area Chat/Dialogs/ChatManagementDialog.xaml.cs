@@ -32,7 +32,7 @@ namespace Local_Area_Chat.Dialogs
             
             // Set admin display
             ChatAdminTextBlock.Text = string.IsNullOrEmpty(adminName) ? 
-                "Chatadmin: Unbekannt" : $"Chatadmin: - {adminName}";
+                "Chatadmin: Unbekannt" : $"Chatadmin: {adminName}";
             
             // Populate lists
             ParticipantsListBox.ItemsSource = participants;
