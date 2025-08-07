@@ -44,8 +44,12 @@
         },
         {
           "DockedHeight": 145,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
@@ -54,7 +58,7 @@
               "RelativeDocumentMoniker": "Local Area Chat\\MVP\\MainPresenter.cs",
               "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MVP\\MainPresenter.cs*",
               "RelativeToolTip": "Local Area Chat\\MVP\\MainPresenter.cs*",
-              "ViewState": "AgIAAH4BAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAHwBAAAAAAAAAAAlwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-06T17:28:31.379Z",
               "EditorCaption": ""
@@ -69,8 +73,8 @@
               "Title": "MainWindow.xaml.cs",
               "DocumentMoniker": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs",
               "RelativeDocumentMoniker": "Local Area Chat\\MainWindow.xaml.cs",
-              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs*",
-              "RelativeToolTip": "Local Area Chat\\MainWindow.xaml.cs*",
+              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs",
+              "RelativeToolTip": "Local Area Chat\\MainWindow.xaml.cs",
               "ViewState": "AgIAAL0DAAAAAAAAAAAewAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-06T17:27:03.563Z",
