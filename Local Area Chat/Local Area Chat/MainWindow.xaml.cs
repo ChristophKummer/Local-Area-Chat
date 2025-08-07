@@ -33,46 +33,50 @@ namespace Local_Area_Chat
         public MainWindow()
         {
             InitializeComponent();
-            
-            // Configure MessagesListBox for text wrapping
             ConfigureMessagesListBox();
+            
+            // IP-Adresse aus Konfiguration oder Dialog holen
+            string serverIP = GetServerIPAddress();
             
             try
             {
-                // Verbesserter Connection String mit authSource=admin
-                repository = new MongoRepository("mongodb://Admin:Admin@localhost:27017/LAC?authSource=admin", "LAC");
+                repository = new MongoRepository($"mongodb://Admin:Admin@{serverIP}:27017/LAC?authSource=admin", "LAC");
             }
             catch (Exception ex)
             {
-                try
-                {
-                    // Fallback: Ohne Authentifizierung versuchen
-                    repository = new MongoRepository("mongodb://localhost:27017", "LAC");
-                }
-                catch (Exception)
-                {
-                    // Zeige Hilfsmeldung für Container-Setup
-                    MessageBox.Show($"MongoDB-Verbindung fehlgeschlagen: {ex.Message}\n\n" +
-                                  "Lösung:\n" +
-                                  "1. Container neu starten:\n" +
-                                  "   docker stop LAC && docker rm LAC\n" +
-                                  "2. Container mit korrekten Parametern starten:\n" +
-                                  "   docker run -d --name LAC -e MONGO_INITDB_ROOT_USERNAME=Admin -e MONGO_INITDB_ROOT_PASSWORD=Admin -p 27017:27017 mongo\n\n" +
-                                  "Arbeite im Offline-Modus...",
-                                  "Datenbankverbindung", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    repository = null;
-                }
+                ShowConnectionError(ex.Message, serverIP);
+                repository = null;
             }
             
             presenter = new MainPresenter(this, repository);
-            
-            // Configure MessagesListBox for text wrapping after initialization
-            ConfigureMessagesListBox();
-            
-            // NEU: Timer für automatische Message-Updates initialisieren
             InitializeMessageRefreshTimer();
         }
 
+        private string GetServerIPAddress()
+        {
+            // Option 1: Aus App.config lesen
+            // return ConfigurationManager.AppSettings["MongoServerIP"] ?? "localhost";
+            
+            // Option 2: Benutzer fragen
+            var ipDialog = ShowInputDialog("Server-Konfiguration", "MongoDB Server IP-Adresse:");
+            return string.IsNullOrWhiteSpace(ipDialog) ? "localhost" : ipDialog.Trim();
+        }
+
+        private void ShowConnectionError(string error, string serverIP)
+        {
+            MessageBox.Show(
+                $"MongoDB-Verbindung zu {serverIP} fehlgeschlagen: {error}\n\n" +
+                "Lösungsansätze:\n" +
+                "1. Prüfen Sie die IP-Adresse des Servers\n" +
+                "2. Stellen Sie sicher, dass MongoDB läuft\n" +
+                "3. Überprüfen Sie Firewall-Einstellungen\n" +
+                "4. Prüfen Sie die Netzwerkverbindung\n\n" +
+                "Arbeite im Offline-Modus...",
+                "Datenbankverbindung",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+        
         // NEU: Timer-Initialisierung
         private void InitializeMessageRefreshTimer()
         {
