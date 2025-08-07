@@ -40,7 +40,7 @@ namespace Local_Area_Chat
             try
             {
                 // Verbesserter Connection String mit authSource=admin
-                repository = new MongoRepository("mongodb://Admin:Admin@localhost:27017/LAC?authSource=admin", "LAC");
+                repository = new MongoRepository("mongodb://Admin:Admin@192.168.144.1:27017/LAC?authSource=admin", "LAC");
             }
             catch (Exception ex)
             {
