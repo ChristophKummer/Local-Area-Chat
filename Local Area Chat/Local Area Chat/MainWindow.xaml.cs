@@ -1,6 +1,7 @@
 using Local_Area_Chat.Dialogs;
 using Local_Area_Chat.MVP;
 using Local_Area_Chat.Data;
+using Local_Area_Chat.Config;  // HINZUGEFÜGT: Für DatabaseConfig
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -37,32 +38,7 @@ namespace Local_Area_Chat
             // Configure MessagesListBox for text wrapping
             ConfigureMessagesListBox();
             
-            try
-            {
-                // Verbesserter Connection String mit authSource=admin
-                repository = new MongoRepository("mongodb://Admin:Admin@192.168.144.1:27017/LAC?authSource=admin", "LAC");
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    // Fallback: Ohne Authentifizierung versuchen
-                    repository = new MongoRepository("mongodb://localhost:27017", "LAC");
-                }
-                catch (Exception)
-                {
-                    // Zeige Hilfsmeldung für Container-Setup
-                    MessageBox.Show($"MongoDB-Verbindung fehlgeschlagen: {ex.Message}\n\n" +
-                                  "Lösung:\n" +
-                                  "1. Container neu starten:\n" +
-                                  "   docker stop LAC && docker rm LAC\n" +
-                                  "2. Container mit korrekten Parametern starten:\n" +
-                                  "   docker run -d --name LAC -e MONGO_INITDB_ROOT_USERNAME=Admin -e MONGO_INITDB_ROOT_PASSWORD=Admin -p 27017:27017 mongo\n\n" +
-                                  "Arbeite im Offline-Modus...",
-                                  "Datenbankverbindung", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    repository = null;
-                }
-            }
+            InitializeDatabaseConnection();
             
             presenter = new MainPresenter(this, repository);
             
@@ -73,6 +49,56 @@ namespace Local_Area_Chat
             InitializeMessageRefreshTimer();
         }
 
+        private async void InitializeDatabaseConnection()
+        {
+            try
+            {
+                // Show loading message
+                System.Diagnostics.Debug.WriteLine("?? Starte Datenbankverbindung zum Raspberry Pi...");
+                
+                // Verwende die neue DatabaseConfig mit Tupel-Rückgabe
+                var (repo, message) = await DatabaseConfig.ConnectToDatabase();
+                repository = repo;
+                
+                if (repository != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"? {message}");
+                    // Erfolgreiche Verbindung - Info anzeigen
+                    MessageBox.Show(message, "Raspberry Pi Verbindung erfolgreich", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    throw new Exception("Keine verfügbare MongoDB-Verbindung gefunden");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Datenbankverbindung fehlgeschlagen: {ex.Message}");
+                
+                // Detaillierte Hilfsmeldung für Raspberry Pi Setup
+                MessageBox.Show($"MongoDB-Verbindung zum Raspberry Pi fehlgeschlagen: {ex.Message}\n\n" +
+                              "? Raspberry Pi MongoDB Status:\n" +
+                              "   MongoDB läuft und ist bereit für Verbindungen\n" +
+                              "   IP: 192.168.1.2:27017\n\n" +
+                              "?? Mögliche Lösungen:\n" +
+                              "1. Netzwerk-Test von Windows:\n" +
+                              "   ping 192.168.1.2\n" +
+                              "   Test-NetConnection -ComputerName 192.168.1.2 -Port 27017\n\n" +
+                              "2. Windows Firewall prüfen\n" +
+                              "3. MongoDB Container Status auf Raspberry Pi:\n" +
+                              "   ssh christoph@192.168.1.2\n" +
+                              "   docker ps\n" +
+                              "   docker logs LAC\n\n" +
+                              "4. Container neu starten (falls nötig):\n" +
+                              "   docker stop LAC && docker rm LAC\n" +
+                              "   docker run -d --name LAC -e MONGO_INITDB_ROOT_USERNAME=Admin -e MONGO_INITDB_ROOT_PASSWORD=Admin -p 0.0.0.0:27017:27017 --restart unless-stopped mongo\n\n" +
+                              "Arbeite im Offline-Modus...",
+                              "Raspberry Pi MongoDB-Verbindung", MessageBoxButton.OK, MessageBoxImage.Warning);
+                repository = null;
+            }
+        }
+        
         // NEU: Timer-Initialisierung
         private void InitializeMessageRefreshTimer()
         {

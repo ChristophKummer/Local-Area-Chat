@@ -40,16 +40,9 @@ namespace Local_Area_Chat.MVP
             { 
                 "Willkommen beim Local Area Chat!",
                 "",
-                "Bitte melde dich an oder erstelle einen neuen Account:",
-                "• Klicke auf das Benutzer-Symbol oben rechts",
-                "• Gib deine Anmeldedaten ein",
-                "• Oder erstelle einen neuen Benutzer",
-                "",
-                "Neuen Account erstellen:",
-                "• Klicke auf 'Neuen Benutzer erstellen'",
-                "• Wähle einen eindeutigen Benutzernamen",
-                "• Erstelle ein sicheres Passwort",
-                "• Sofort loslegen und chatten!"
+                "Bitte melde dich an oder erstelle einen neuen Account!",
+
+
             };
             
             view.SetChatrooms(new List<string> { "Anmeldung erforderlich" });

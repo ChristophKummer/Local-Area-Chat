@@ -50,7 +50,9 @@
 
             <!-- Chatteilnehmer -->
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Chatteilnehmer:" Margin="0,0,0,5"/>
-            <ListBox x:Name="ParticipantsListBox" Grid.Row="1" Grid.Column="0" Height="150"/>
+            <ListBox x:Name="ParticipantsListBox" Grid.Row="1" Grid.Column="0" Height="150"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
             <Button x:Name="RemoveUserButton" Grid.Row="2" Grid.Column="0" 
                     Content="Entfernen" Width="80" HorizontalAlignment="Left" Margin="0,5,0,0"
                     IsEnabled="False" Click="RemoveUserButton_Click"/>
@@ -58,7 +60,25 @@
             <!-- Benutzer hinzufügen -->
             <TextBlock Grid.Row="0" Grid.Column="2" Text="Benutzer hinzufügen:" Margin="0,0,0,5"/>
             <ListBox x:Name="AvailableUsersListBox" Grid.Row="1" Grid.Column="2" Height="150"
-                     DisplayMemberPath="UserName" SelectionChanged="AvailableUsersListBox_SelectionChanged"/>
+                     DisplayMemberPath="UserName" SelectionChanged="AvailableUsersListBox_SelectionChanged"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="5,3"/>
+                        <Setter Property="Margin" Value="1"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E3F2FD"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#2196F3"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
             <Button x:Name="AddUserButton" Grid.Row="2" Grid.Column="2" 
                     Content="Hinzufügen" Width="80" HorizontalAlignment="Left" Margin="0,5,0,0"
                     IsEnabled="False" Click="AddUserButton_Click"/>
