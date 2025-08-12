@@ -1,0 +1,13 @@
+﻿namespace Local_Area_Chat.MVP.ViewModels
+{
+    public class InputDialogViewModel
+    {
+        public string Title { get; set; } = "";
+        public string Prompt { get; set; } = "";
+        public string DefaultValue { get; set; } = "";
+        
+        // Results from dialog
+        public bool DialogResult { get; set; }
+        public string InputValue { get; set; } = "";
+    }
+}

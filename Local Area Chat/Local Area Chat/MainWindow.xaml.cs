@@ -1,8 +1,9 @@
 using Local_Area_Chat.Dialogs;
 using Local_Area_Chat.MVP;
 using Local_Area_Chat.Data;
-using Local_Area_Chat.Config;  // HINZUGEFÜGT: Für DatabaseConfig
-using Local_Area_Chat.Security; // NEU: Für ChatEncryption
+using Local_Area_Chat.Config;
+using Local_Area_Chat.Security;
+using Local_Area_Chat.MVP.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -15,60 +16,43 @@ using Local_Area_Chat.MVP.Models;
 
 namespace Local_Area_Chat
 {
-    //Setup für docker von Video
-    //https://www.youtube.com/watch?v=gFjpv-nZO0U&t=7s
-    //docker run -d --name LAC -e MONGO_INITDB_ROOT_USERNAME=Admin -e MONGO_INITDB_ROOT_PASSWORD=Admin -p 27017:27017 mongo
-    //Username: Admin
-    //Password: Admin
-    //Port: 27017:27017
-    //docker stop LAC
-    //docker rm LAC
-
-    //IP-Adressenanpassung auf Raspberry falls nötig
-    //sudo ip addr add 192.168.1.2/24 dev eth0
-    //mongodb://Admin:Admin@192.168.1.2:27017/?authSource=admin
-
+    /// <summary>
+    /// WPF View-Klasse für MVP-Pattern - implementiert IMainView Interface
+    /// Hauptfenster für Local Area Chat mit verschlüsselter MongoDB-Kommunikation
+    /// </summary>
     public partial class MainWindow : Window, IMainView
     {
         private MainPresenter presenter;
         private MongoRepository repository;
         private DispatcherTimer? loginCloseTimer;
-        private DispatcherTimer? messageRefreshTimer; // NEU: Timer für automatische Updates
-        private string? currentChatId; // NEU: Aktuelle Chat-ID verfolgen
+        private DispatcherTimer? messageRefreshTimer;
+        private string? currentChatId;
 
         public MainWindow()
         {
             InitializeComponent();
-            
-            // Configure MessagesListBox for text wrapping
             ConfigureMessagesListBox();
-            
             InitializeDatabaseConnection();
-            
             presenter = new MainPresenter(this, repository);
-            
-            // Configure MessagesListBox for text wrapping after initialization
             ConfigureMessagesListBox();
-            
-            // NEU: Timer für automatische Message-Updates initialisieren
             InitializeMessageRefreshTimer();
         }
 
+        /// <summary>
+        /// Stellt Verbindung zur MongoDB auf Raspberry Pi her
+        /// </summary>
         private async void InitializeDatabaseConnection()
         {
             try
             {
-                // Show loading message
                 System.Diagnostics.Debug.WriteLine("?? Starte Datenbankverbindung zum Raspberry Pi...");
                 
-                // Verwende die neue DatabaseConfig mit Tupel-Rückgabe
                 var (repo, message) = await DatabaseConfig.ConnectToDatabase();
                 repository = repo;
                 
                 if (repository != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"? {message}");
-                    // Erfolgreiche Verbindung - Info anzeigen
                     MessageBox.Show(message, "Raspberry Pi Verbindung erfolgreich", 
                                   MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -81,7 +65,6 @@ namespace Local_Area_Chat
             {
                 System.Diagnostics.Debug.WriteLine($"? Datenbankverbindung fehlgeschlagen: {ex.Message}");
                 
-                // Detaillierte Hilfsmeldung für Raspberry Pi Setup
                 MessageBox.Show($"MongoDB-Verbindung zum Raspberry Pi fehlgeschlagen: {ex.Message}\n\n" +
                               "? Raspberry Pi MongoDB Status:\n" +
                               "   MongoDB läuft und ist bereit für Verbindungen\n" +
@@ -104,18 +87,21 @@ namespace Local_Area_Chat
             }
         }
         
-        // NEU: Timer-Initialisierung
+        /// <summary>
+        /// Initialisiert Timer für automatische Message-Updates (alle 3 Sekunden)
+        /// </summary>
         private void InitializeMessageRefreshTimer()
         {
             messageRefreshTimer = new DispatcherTimer();
-            messageRefreshTimer.Interval = TimeSpan.FromSeconds(3); // Alle 3 Sekunden prüfen
+            messageRefreshTimer.Interval = TimeSpan.FromSeconds(3);
             messageRefreshTimer.Tick += MessageRefreshTimer_Tick;
         }
 
-        // NEU: Timer-Event Handler
+        /// <summary>
+        /// Timer-Event: Aktualisiert Nachrichten automatisch wenn Chat aktiv
+        /// </summary>
         private async void MessageRefreshTimer_Tick(object? sender, EventArgs e)
         {
-            // Nur aktualisieren wenn ein Chat ausgewählt ist und Benutzer eingeloggt ist
             if (!string.IsNullOrEmpty(currentChatId) && presenter != null)
             {
                 try
@@ -129,12 +115,13 @@ namespace Local_Area_Chat
             }
         }
 
+        /// <summary>
+        /// Konfiguriert MessagesListBox für Textwrapping und Scrollverhalten
+        /// </summary>
         private void ConfigureMessagesListBox()
         {
-            // Configure the MessagesListBox for text wrapping and disable horizontal scrolling
             var itemTemplate = new DataTemplate();
             
-            // Create a TextBlock with TextWrapping
             var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
             textBlockFactory.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding());
             textBlockFactory.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap);
@@ -144,11 +131,15 @@ namespace Local_Area_Chat
             itemTemplate.VisualTree = textBlockFactory;
             MessagesListBox.ItemTemplate = itemTemplate;
             
-            // Configure ScrollViewer to disable horizontal scrolling
             System.Windows.Controls.ScrollViewer.SetHorizontalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Disabled);
             System.Windows.Controls.ScrollViewer.SetVerticalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Auto);
         }
 
+        #region IMainView Implementation
+
+        /// <summary>
+        /// Setzt Chat-Liste in der UI und wählt ersten Chat aus
+        /// </summary>
         public void SetChatrooms(List<string> chatrooms)
         {
             ChatroomListBox.ItemsSource = chatrooms;
@@ -156,12 +147,14 @@ namespace Local_Area_Chat
                 ChatroomListBox.SelectedIndex = 0;
         }
 
+        /// <summary>
+        /// Zeigt Nachrichten in der UI mit automatischem Textwrapping
+        /// </summary>
         public void SetMessages(List<string> messages)
         {
             MessagesListBox.ItemsSource = null;
             MessagesListBox.ItemsSource = messages;
             
-            // Configure text wrapping if not already configured
             if (MessagesListBox.ItemTemplate == null)
             {
                 var itemTemplate = new DataTemplate();
@@ -173,7 +166,6 @@ namespace Local_Area_Chat
                 itemTemplate.VisualTree = textBlockFactory;
                 MessagesListBox.ItemTemplate = itemTemplate;
                 
-                // Disable horizontal scrolling
                 System.Windows.Controls.ScrollViewer.SetHorizontalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Disabled);
                 System.Windows.Controls.ScrollViewer.SetVerticalScrollBarVisibility(MessagesListBox, ScrollBarVisibility.Auto);
             }
@@ -181,9 +173,7 @@ namespace Local_Area_Chat
 
         public void ClearMessageInput() => MessageTextBox.Text = "";
         public string GetMessageInput() => MessageTextBox.Text;
-
         public int GetSelectedChatroomIndex() => ChatroomListBox.SelectedIndex;
-
         public string GetLoginUsername() => UserTextBox.Text;
         public string GetLoginPassword() => PasswordBox.Password;
 
@@ -214,32 +204,32 @@ namespace Local_Area_Chat
                           "Registrierung Erfolgreich", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // User Display-Funktionalität
+        /// <summary>
+        /// Zeigt Benutzername in der UI an und startet Message-Timer
+        /// </summary>
         public void SetCurrentUserDisplay(string username)
         {
-            // Show username next to user icon
             UserNameTextBlock.Text = username;
             UserNameTextBlock.Visibility = Visibility.Visible;
             
-            // NEU: Timer starten wenn bereits ein Chat ausgewählt ist
             if (!string.IsNullOrEmpty(currentChatId))
             {
                 messageRefreshTimer?.Start();
             }
         }
 
+        /// <summary>
+        /// Versteckt Benutzeranzeige und stoppt Timer
+        /// </summary>
         public void ClearCurrentUserDisplay()
         {
-            // Hide username next to user icon
             UserNameTextBlock.Text = "";
             UserNameTextBlock.Visibility = Visibility.Collapsed;
             
-            // NEU: Timer stoppen beim Logout
             messageRefreshTimer?.Stop();
             currentChatId = null;
         }
 
-        // Chat Creation-Funktionalität
         public void ShowNewChatError(string message)
         {
             MessageBox.Show(message, "Neuer Chat Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -250,7 +240,6 @@ namespace Local_Area_Chat
             MessageBox.Show($"Chat '{chatName}' wurde erfolgreich erstellt!", "Neuer Chat", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // Chat Management-Funktionalität
         public void ShowChatManagementError(string message)
         {
             MessageBox.Show(message, "Chat Management Fehler", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -261,277 +250,55 @@ namespace Local_Area_Chat
             MessageBox.Show(message, "Chat Management", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void ChatroomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        /// <summary>
+        /// Zeigt Chat-Management-Dialog mit ViewModel-Pattern
+        /// </summary>
+        public void ShowChatManagementDialog(ChatManagementViewModel viewModel)
         {
-            if (presenter != null)
-            {
-                var selectedIndex = GetSelectedChatroomIndex();
-                presenter.OnChatroomChanged(selectedIndex);
-
-                // NEU: Aktuelle Chat-ID speichern und Timer starten
-                if (selectedIndex >= 0)
-                {
-                    Task.Run(async () => {
-                        currentChatId = await presenter.GetChatIdByIndex(selectedIndex);
-                        
-                        // Timer nur starten wenn Chat ausgewählt und Benutzer eingeloggt
-                        if (!string.IsNullOrEmpty(currentChatId))
-                        {
-                            Dispatcher.Invoke(() => messageRefreshTimer?.Start());
-                        }
-                    });
-                }
-                else
-                {
-                    currentChatId = null;
-                    messageRefreshTimer?.Stop();
-                }
-            }
-
-            SelectedChatroomTextBlock.Text = ChatroomListBox.SelectedItem?.ToString() ?? "";
-        }
-
-        private void SendButton_Click(object sender, RoutedEventArgs e)
-        {
-            presenter.OnSendMessage(GetSelectedChatroomIndex());
-        }
-
-        private void LoginToggleButton_Click(object sender, RoutedEventArgs e)
-        {
-            LoginPopup.IsOpen = true;
+            var dialog = new ChatManagementDialog(
+                viewModel.ChatName, 
+                viewModel.IsPrivate, 
+                viewModel.Participants, 
+                viewModel.AvailableUsers, 
+                viewModel.AdminName);
             
-            // Set focus to username field when login popup opens
-            UserTextBox.Focus();
-        }
-
-        private void LoginPopup_MouseLeave(object sender, MouseEventArgs e)
-        {
-            // Timer starten, wenn Maus das Popup verlässt
-            if (loginCloseTimer == null)
-            {
-                loginCloseTimer = new DispatcherTimer();
-                loginCloseTimer.Interval = TimeSpan.FromSeconds(1);
-                loginCloseTimer.Tick += LoginCloseTimer_Tick;
-            }
-            loginCloseTimer.Start();
-        }
-
-        private void LoginPopup_MouseEnter(object sender, MouseEventArgs e)
-        {
-            // Timer stoppen, wenn Maus wieder im Popup ist
-            loginCloseTimer?.Stop();
-        }
-
-        private void LoginCloseTimer_Tick(object? sender, EventArgs e)
-        {
-            loginCloseTimer?.Stop();
-            LoginPopup.IsOpen = false;
-            UserTextBox.Text = "";
-            PasswordBox.Password = "";
-        }
-
-        private async void LoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Echte Login-Logik implementieren
-            var username = GetLoginUsername();
-            var password = GetLoginPassword();
-
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-            {
-                ShowLoginError("Bitte Benutzername und Passwort eingeben");
-                return;
-            }
-
-            LoginPopup.IsOpen = false;
+            viewModel.DialogResult = dialog.ShowDialog() == true;
             
-            // Login über Presenter (ohne Public Key)
-            var loginSuccess = await presenter.LoginAsync(username, password);
-            
-            if (!loginSuccess)
+            if (viewModel.DialogResult)
             {
-                // Bei Fehler Popup wieder öffnen
-                LoginPopup.IsOpen = true;
+                viewModel.NewChatName = dialog.NewChatName;
+                viewModel.NewIsPrivate = dialog.IsPrivate;
+                viewModel.AddedUsers = dialog.AddedUsers;
+                viewModel.RemovedUsers = dialog.RemovedUsers;
+                viewModel.DeleteChat = dialog.DeleteChat;
             }
         }
 
-        private void HamburgerButton_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Zeigt Input-Dialog mit ViewModel-Pattern
+        /// </summary>
+        public void ShowInputDialog(InputDialogViewModel viewModel)
         {
-            HamburgerButton.ContextMenu.IsOpen = true;
+            var result = ShowInputDialog(viewModel.Title, viewModel.Prompt);
+            viewModel.DialogResult = !string.IsNullOrEmpty(result);
+            viewModel.InputValue = result ?? "";
         }
 
-        private void HamburgerMenu_Profile_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Zeigt Benutzer-Auswahl-Dialog mit ViewModel-Pattern
+        /// </summary>
+        public void ShowUserSelectionDialog(UserSelectionViewModel viewModel)
         {
-            MessageBox.Show("Profil geöffnet");
-            ProfilePanel.Visibility = Visibility.Visible;
+            var user = ShowUserSelectionDialog(viewModel.Title, viewModel.AvailableUsers);
+            viewModel.DialogResult = user != null;
+            viewModel.SelectedUser = user;
         }
 
-        private void HamburgerMenu_Logout_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Erstellt dynamischen Input-Dialog für Texteingaben
+        /// </summary>
+        public string ShowInputDialog(string title, string prompt)
         {
-            var result = MessageBox.Show("Möchten Sie sich wirklich abmelden?", "Abmelden", 
-                                       MessageBoxButton.YesNo, MessageBoxImage.Question);
-            
-            if (result == MessageBoxResult.Yes)
-            {
-                presenter.Logout();
-                MessageBox.Show("Sie wurden erfolgreich abgemeldet", "Abgemeldet", 
-                              MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private void ProfileSaveButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Hier kannst du die Logik zum Speichern der Profil-Daten einfügen
-            ProfilePanel.Visibility = Visibility.Collapsed;
-        }
-
-        private void ProfileCloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Felder leeren (optional)
-            ProfileUserTextBox.Text = "";
-            ProfilePasswordTextBox.Text = "";
-            ProfileRoleComboBox.SelectedIndex = -1;
-            ProfilePanel.Visibility = Visibility.Collapsed;
-        }
-
-        private void MessageTextBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                SendButton_Click(this, new RoutedEventArgs());
-                e.Handled = true;
-            }
-        }
-
-        private void UserTextBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter || e.Key == Key.Tab)
-            {
-                // Move focus to password box
-                PasswordBox.Focus();
-                e.Handled = true;
-            }
-        }
-
-        private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                // Trigger login when Enter is pressed in password field
-                LoginButton_Click(this, new RoutedEventArgs());
-                e.Handled = true;
-            }
-        }
-
-        private async void NewChatButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Check if user is logged in
-            if (presenter == null)
-            {
-                ShowNewChatError("Bitte melden Sie sich zuerst an, um einen neuen Chat zu erstellen.");
-                return;
-            }
-
-            // Ask for chat name
-            var chatName = ShowInputDialog("Neuen Chat erstellen", "Chat-Name eingeben:");
-            if (string.IsNullOrWhiteSpace(chatName))
-                return;
-
-            chatName = chatName.Trim();
-
-            // Validate chat name
-            if (chatName.Length < 2)
-            {
-                ShowNewChatError("Der Chat-Name muss mindestens 2 Zeichen lang sein.");
-                return;
-            }
-
-            if (chatName.Length > 50)
-            {
-                ShowNewChatError("Der Chat-Name darf maximal 50 Zeichen lang sein.");
-                return;
-            }
-
-            // Create new chat with current user
-            await presenter.CreateNewChatSimple(chatName);
-        }
-
-        private async void EditMessage_Click(object sender, RoutedEventArgs e)
-        {
-            var chatroomIndex = GetSelectedChatroomIndex();
-            if (chatroomIndex < 0) return;
-            
-            var selectedIndex = MessagesListBox.SelectedIndex;
-            if (selectedIndex < 0) return;
-
-            // Hole den Chat-Namen und verwende ihn als ChatId (vereinfacht)
-            var selectedChatName = ChatroomListBox.SelectedItem?.ToString();
-            if (string.IsNullOrEmpty(selectedChatName)) return;
-
-            // Hole die Message aus dem Repository
-            var chatMessages = await presenter.GetMessagesForEdit(selectedChatName);
-            if (selectedIndex >= chatMessages.Count) return;
-            
-            var selectedMessage = chatMessages[selectedIndex];
-
-            // Check if current user can edit this message
-            if (!presenter.CanCurrentUserEditMessage(selectedMessage))
-            {
-                MessageBox.Show("Sie können nur Ihre eigenen Nachrichten bearbeiten.", 
-                              "Bearbeitung nicht erlaubt", 
-                              MessageBoxButton.OK, 
-                              MessageBoxImage.Warning);
-                return;
-            }
-
-            var dialog = new EditMessageDialog(selectedMessage.Content);
-            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.NewContent))
-            {
-                await presenter.OnEditMessage(selectedMessage, dialog.NewContent);
-            }
-        }
-
-        private async void RegisterButton_Click(object sender, RoutedEventArgs e)
-        {
-            LoginPopup.IsOpen = false;
-
-            // Simple registration using only username and password
-            var usernameResult = ShowInputDialog("Neuen Benutzer erstellen", "Benutzername (mindestens 3 Zeichen):");
-            if (string.IsNullOrWhiteSpace(usernameResult))
-                return;
-
-            var passwordResult = ShowInputDialog("Neuen Benutzer erstellen", "Passwort (mindestens 6 Zeichen):");
-            if (string.IsNullOrWhiteSpace(passwordResult))
-                return;
-
-            var username = usernameResult.Trim();
-            var password = passwordResult;
-
-            // Validate input
-            if (username.Length < 3)
-            {
-                ShowRegistrationError("Der Benutzername muss mindestens 3 Zeichen lang sein.");
-                return;
-            }
-
-            if (password.Length < 6)
-            {
-                ShowRegistrationError("Das Passwort muss mindestens 6 Zeichen lang.");
-                return;
-            }
-
-            // Register user through presenter (Public Key will be auto-generated)
-            var success = await presenter.RegisterUserAsync(username, password);
-            
-            if (!success)
-            {
-                // Error message is already shown by the presenter
-                LoginPopup.IsOpen = true; // Reopen login popup for retry
-            }
-        }
-
-        private string ShowInputDialog(string title, string prompt)
-        {
-            // Create a simple input dialog window
             var inputWindow = new Window
             {
                 Title = title,
@@ -617,309 +384,10 @@ namespace Local_Area_Chat
             return inputWindow.ShowDialog() == true ? inputWindow.Tag?.ToString() ?? "" : "";
         }
 
-        // DIESE METHODE NUR EINMAL DEFINIEREN!
-        private async Task<string?> GetSelectedChatId()
-        {
-            var selectedIndex = GetSelectedChatroomIndex();
-            if (selectedIndex < 0) return null;
-
-            var selectedChatName = ChatroomListBox.SelectedItem?.ToString();
-            if (string.IsNullOrEmpty(selectedChatName)) return null;
-
-            // Chat-ID anhand des Chat-Namens aus der Datenbank holen
-            if (presenter != null && repository != null)
-            {
-                var allChats = await repository.GetAllChatsAsync();
-                var chat = allChats.FirstOrDefault(c => c.ChatName == selectedChatName);
-                return chat?.ChatId;
-            }
-
-            return null;
-        }
-
-        // Chat management event handlers
-        private async void ManageChat_Click(object sender, RoutedEventArgs e)
-        {
-            var selectedIndex = GetSelectedChatroomIndex();
-            if (selectedIndex < 0)
-            {
-                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
-                return;
-            }
-
-            try
-            {
-                var chatId = await GetSelectedChatId();
-                if (chatId == null) return;
-
-                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
-                if (!isAdmin)
-                {
-                    ShowChatManagementError("Sie sind nicht der Administrator dieses Chats.");
-                    return;
-                }
-
-                // Get current chat information
-                var chat = await presenter.GetChatByIdAsync(chatId);
-                if (chat == null) return;
-
-                var chatName = chat.ChatName;
-                var isPrivate = chat.IsPrivate;
-                var participants = await presenter.GetChatParticipantsAsync(chatId);
-                var availableUsers = await presenter.GetAvailableUsersForChat(chatId);
-                
-                // Get admin name
-                var adminUser = await presenter.GetUserByIdAsync(chat.AdminUserId);
-                var adminName = adminUser?.UserName ?? "Unbekannt";
-                
-                // Open enhanced chat management dialog
-                var dialog = new ChatManagementDialog(chatName, isPrivate, participants, availableUsers, adminName);
-                if (dialog.ShowDialog() == true)
-                {
-                    // Check if chat should be deleted
-                    if (dialog.DeleteChat)
-                    {
-                        var deleteSuccess = await presenter.DeleteChatAsync(chatId);
-                        if (deleteSuccess)
-                        {
-                            ShowChatManagementSuccess("Chat wurde erfolgreich gelöscht.");
-                            
-                            // WICHTIG: Chat-Liste aus der Datenbank neu laden
-                            await RefreshChatList();
-                            return;
-                        }
-                        else
-                        {
-                            ShowChatManagementError("Fehler beim Löschen des Chats.");
-                            return;
-                        }
-                    }
-
-                    // Verfolge, ob Änderungen vorgenommen wurden
-                    bool changesApplied = false;
-
-                    // Update chat name if changed
-                    if (!string.IsNullOrEmpty(dialog.NewChatName) && dialog.NewChatName != chatName)
-                    {
-                        var nameUpdateSuccess = await presenter.UpdateChatNameAsync(chatId, dialog.NewChatName);
-                        if (nameUpdateSuccess)
-                        {
-                            changesApplied = true;
-                        }
-                        else
-                        {
-                            ShowChatManagementError("Fehler beim Aktualisieren des Chat-Namens.");
-                            return;
-                        }
-                    }
-                    
-                    // Update status if changed
-                    if (dialog.IsPrivate != isPrivate)
-                    {
-                        var statusUpdateSuccess = await presenter.UpdateChatStatusAsync(chatId, dialog.IsPrivate);
-                        if (statusUpdateSuccess)
-                        {
-                            changesApplied = true;
-                        }
-                        else
-                        {
-                            ShowChatManagementError("Fehler beim Aktualisieren des Chat-Status.");
-                            return;
-                        }
-                    }
-
-                    // Add new users
-                    foreach (var user in dialog.AddedUsers)
-                    {
-                        var addSuccess = await presenter.AddUserToChatAsAdmin(chatId, user.UserId);
-                        if (addSuccess)
-                        {
-                            changesApplied = true;
-                        }
-                    }
-
-                    // Remove users
-                    foreach (var username in dialog.RemovedUsers)
-                    {
-                        var userId = await presenter.GetUserIdByUsername(username);
-                        if (userId != null)
-                        {
-                            var removeSuccess = await presenter.RemoveUserFromChatAsAdmin(chatId, userId);
-                            if (removeSuccess)
-                            {
-                                changesApplied = true;
-                            }
-                        }
-                    }
-                    
-                    // Nur wenn Änderungen vorgenommen wurden, aktualisiere die UI
-                    if (changesApplied)
-                    {
-                        ShowChatManagementSuccess("Chat-Einstellungen wurden erfolgreich aktualisiert.");
-                        
-                        // WICHTIG: Chat-Liste aus der Datenbank neu laden
-                        await RefreshChatList();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowChatManagementError($"Fehler beim Verwalten des Chats: {ex.Message}");
-            }
-        }
-
-        private async Task<bool> UpdateChatNameInDatabase(string chatId, string newChatName)
-        {
-            try
-            {
-                return await presenter.UpdateChatNameAsync(chatId, newChatName);
-            }
-            catch (Exception ex)
-            {
-                ShowChatManagementError($"Datenbankfehler beim Aktualisieren des Chat-Namens: {ex.Message}");
-                return false;
-            }
-        }
-
-        private async Task<bool> UpdateChatStatusInDatabase(string chatId, bool isPrivate)
-        {
-            try
-            {
-                return await presenter.UpdateChatStatusAsync(chatId, isPrivate);
-            }
-            catch (Exception ex)
-            {
-                ShowChatManagementError($"Datenbankfehler beim Aktualisieren des Chat-Status: {ex.Message}");
-                return false;
-            }
-        }
-
-        private async Task RefreshChatList()
-        {
-            try
-            {
-                if (presenter != null)
-                {
-                    // Lade die Chats für den aktuellen Benutzer neu aus der Datenbank
-                    await presenter.RefreshUserChatsFromDatabase();
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowChatManagementError($"Fehler beim Aktualisieren der Chat-Liste: {ex.Message}");
-            }
-        }
-
-        private async void AddUserToChat_Click(object sender, RoutedEventArgs e)
-        {
-            var selectedIndex = GetSelectedChatroomIndex();
-            if (selectedIndex < 0)
-            {
-                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
-                return;
-            }
-
-            try
-            {
-                var chatId = await GetSelectedChatId();
-                if (chatId == null) return;
-
-                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
-                if (!isAdmin)
-                {
-                    ShowChatManagementError("Nur der Chat-Administrator kann Benutzer hinzufügen.");
-                    return;
-                }
-
-                var availableUsers = await presenter.GetAvailableUsersForChat(chatId);
-                if (!availableUsers.Any())
-                {
-                    ShowChatManagementError("Keine verfügbaren Benutzer zum Hinzufügen gefunden.");
-                    return;
-                }
-
-                var userToAdd = ShowUserSelectionDialog("Benutzer zum Chat hinzufügen", availableUsers);
-                if (userToAdd != null)
-                {
-                    var success = await presenter.AddUserToChatAsAdmin(chatId, userToAdd.UserId);
-                    if (success)
-                    {
-                        ShowChatManagementSuccess($"Benutzer '{userToAdd.UserName}' wurde erfolgreich zum Chat hinzugefügt.");
-                        
-                        // Chat-Liste aktualisieren
-                        await RefreshChatList();
-                    }
-                    else
-                    {
-                        ShowChatManagementError("Fehler beim Hinzufügen des Benutzers.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ShowChatManagementError($"Fehler beim Hinzufügen des Benutzers: {ex.Message}");
-            }
-        }
-
-        private async void RemoveUserFromChat_Click(object sender, RoutedEventArgs e)
-        {
-            var selectedIndex = GetSelectedChatroomIndex();
-            if (selectedIndex < 0)
-            {
-                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
-                return;
-            }
-
-            try
-            {
-                var chatId = await GetSelectedChatId();
-                if (chatId == null) return;
-
-                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
-                if (!isAdmin)
-                {
-                    ShowChatManagementError("Nur der Chat-Administrator kann Benutzer entfernen.");
-                    return;
-                }
-
-                ShowChatManagementError("Funktion wird implementiert. Verwenden Sie 'Chat-Teilnehmer anzeigen' um die Teilnehmer zu sehen.");
-            }
-            catch (Exception ex)
-            {
-                ShowChatManagementError($"Fehler beim Entfernen des Benutzers: {ex.Message}");
-            }
-        }
-
-        private async void ShowChatParticipants_Click(object sender, RoutedEventArgs e)
-        {
-            var selectedIndex = GetSelectedChatroomIndex();
-            if (selectedIndex < 0)
-            {
-                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
-                return;
-            }
-
-            try
-            {
-                var chatId = await GetSelectedChatId();
-                if (chatId == null) return;
-
-                var participants = await presenter.GetChatParticipantsAsync(chatId);
-                var participantsList = string.Join("\n• ", participants);
-                
-                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
-                var adminText = isAdmin ? "\n\n[Sie sind Administrator dieses Chats]" : "";
-                
-                MessageBox.Show($"Chat-Teilnehmer:\n\n• {participantsList}{adminText}", 
-                              "Chat-Teilnehmer", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                ShowChatManagementError($"Fehler beim Laden der Chat-Teilnehmer: {ex.Message}");
-            }
-        }
-
-        private User? ShowUserSelectionDialog(string title, List<User> users)
+        /// <summary>
+        /// Erstellt dynamischen Benutzer-Auswahl-Dialog
+        /// </summary>
+        public User? ShowUserSelectionDialog(string title, List<User> users)
         {
             var selectionWindow = new Window
             {
@@ -1003,10 +471,348 @@ namespace Local_Area_Chat
             return selectionWindow.ShowDialog() == true ? selectionWindow.Tag as User : null;
         }
 
-        // NEU: Window Closing Handler
+        /// <summary>
+        /// Aktualisiert ausgewählten Chat-Namen in der UI
+        /// </summary>
+        public void UpdateSelectedChatroom(string chatroomName)
+        {
+            SelectedChatroomTextBlock.Text = chatroomName;
+        }
+
+        public void StartMessageRefresh()
+        {
+            messageRefreshTimer?.Start();
+        }
+
+        public void StopMessageRefresh()
+        {
+            messageRefreshTimer?.Stop();
+        }
+
+        /// <summary>
+        /// Aktiviert/deaktiviert Admin-spezifische UI-Optionen
+        /// </summary>
+        public void ShowAdminOptions(bool isAdmin)
+        {
+            System.Diagnostics.Debug.WriteLine($"Admin-Optionen {(isAdmin ? "aktiviert" : "deaktiviert")}");
+        }
+
+        /// <summary>
+        /// Lädt Chat-Liste asynchron aus der Datenbank neu
+        /// </summary>
+        public void RefreshChatList()
+        {
+            _ = Task.Run(async () => await presenter.RefreshUserChatsFromDatabase());
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        /// <summary>
+        /// Chat-Auswahl geändert: Lädt Nachrichten und startet Timer
+        /// </summary>
+        private void ChatroomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (presenter != null)
+            {
+                var selectedIndex = GetSelectedChatroomIndex();
+                presenter.OnChatroomChanged(selectedIndex);
+
+                if (selectedIndex >= 0)
+                {
+                    Task.Run(async () => {
+                        currentChatId = await presenter.GetChatIdByIndex(selectedIndex);
+                        
+                        if (!string.IsNullOrEmpty(currentChatId))
+                        {
+                            Dispatcher.Invoke(() => messageRefreshTimer?.Start());
+                        }
+                    });
+                }
+                else
+                {
+                    currentChatId = null;
+                    messageRefreshTimer?.Stop();
+                }
+            }
+
+            SelectedChatroomTextBlock.Text = ChatroomListBox.SelectedItem?.ToString() ?? "";
+        }
+
+        private void SendButton_Click(object sender, RoutedEventArgs e)
+        {
+            presenter.OnSendMessage(GetSelectedChatroomIndex());
+        }
+
+        /// <summary>
+        /// Login-Popup öffnen und Fokus setzen
+        /// </summary>
+        private void LoginToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            LoginPopup.IsOpen = true;
+            UserTextBox.Focus();
+        }
+
+        /// <summary>
+        /// Auto-Close Timer für Login-Popup starten
+        /// </summary>
+        private void LoginPopup_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (loginCloseTimer == null)
+            {
+                loginCloseTimer = new DispatcherTimer();
+                loginCloseTimer.Interval = TimeSpan.FromSeconds(1);
+                loginCloseTimer.Tick += LoginCloseTimer_Tick;
+            }
+            loginCloseTimer.Start();
+        }
+
+        /// <summary>
+        /// Auto-Close Timer für Login-Popup stoppen
+        /// </summary>
+        private void LoginPopup_MouseEnter(object sender, MouseEventArgs e)
+        {
+            loginCloseTimer?.Stop();
+        }
+
+        /// <summary>
+        /// Login-Popup automatisch schließen nach Timeout
+        /// </summary>
+        private void LoginCloseTimer_Tick(object? sender, EventArgs e)
+        {
+            loginCloseTimer?.Stop();
+            LoginPopup.IsOpen = false;
+            UserTextBox.Text = "";
+            PasswordBox.Password = "";
+        }
+
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
+            => await presenter.HandleUserLogin(GetLoginUsername(), GetLoginPassword());
+
+        private async void RegisterButton_Click(object sender, RoutedEventArgs e)
+            => await presenter.HandleUserRegistration();
+
+        private async void NewChatButton_Click(object sender, RoutedEventArgs e)
+            => await presenter.HandleNewChatCreation();
+
+        private async void ManageChat_Click(object sender, RoutedEventArgs e)
+            => await presenter.HandleChatManagement(GetSelectedChatroomIndex());
+
+        private async void AddUserToChat_Click(object sender, RoutedEventArgs e)
+            => await presenter.HandleUserAddition(GetSelectedChatroomIndex());
+
+        private void HamburgerButton_Click(object sender, RoutedEventArgs e)
+        {
+            HamburgerButton.ContextMenu.IsOpen = true;
+        }
+
+        private void HamburgerMenu_Profile_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Profil geöffnet");
+            ProfilePanel.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>
+        /// Logout mit Sicherheitsabfrage und Verschlüsselungs-Cleanup
+        /// </summary>
+        private void HamburgerMenu_Logout_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show("Möchten Sie sich wirklich abmelden?", "Abmelden", 
+                                       MessageBoxButton.YesNo, MessageBoxImage.Question);
+            
+            if (result == MessageBoxResult.Yes)
+            {
+                ChatEncryption.ClearAllChatKeys();
+                System.Diagnostics.Debug.WriteLine("?? Alle Chat-Schlüssel entfernt");
+                
+                presenter.Logout();
+                MessageBox.Show("Sie wurden erfolgreich abgemeldet", "Abgemeldet", 
+                              MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void ProfileSaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            ProfilePanel.Visibility = Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// Profil-Panel schließen und Felder zurücksetzen
+        /// </summary>
+        private void ProfileCloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            ProfileUserTextBox.Text = "";
+            ProfilePasswordTextBox.Text = "";
+            ProfileRoleComboBox.SelectedIndex = -1;
+            ProfilePanel.Visibility = Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// Enter-Taste sendet Nachricht
+        /// </summary>
+        private void MessageTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                SendButton_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// Enter/Tab wechselt zu Passwort-Feld
+        /// </summary>
+        private void UserTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter || e.Key == Key.Tab)
+            {
+                PasswordBox.Focus();
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// Enter startet Login-Prozess
+        /// </summary>
+        private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                LoginButton_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+
+        /// <summary>
+        /// Nachricht bearbeiten: Prüft Berechtigung und öffnet Dialog
+        /// </summary>
+        private async void EditMessage_Click(object sender, RoutedEventArgs e)
+        {
+            var chatroomIndex = GetSelectedChatroomIndex();
+            if (chatroomIndex < 0) return;
+            
+            var selectedIndex = MessagesListBox.SelectedIndex;
+            if (selectedIndex < 0) return;
+
+            var selectedChatName = ChatroomListBox.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(selectedChatName)) return;
+
+            var chatMessages = await presenter.GetMessagesForEdit(selectedChatName);
+            if (selectedIndex >= chatMessages.Count) return;
+            
+            var selectedMessage = chatMessages[selectedIndex];
+
+            if (!presenter.CanCurrentUserEditMessage(selectedMessage))
+            {
+                MessageBox.Show("Sie können nur Ihre eigenen Nachrichten bearbeiten.", 
+                              "Bearbeitung nicht erlaubt", 
+                              MessageBoxButton.OK, 
+                              MessageBoxImage.Warning);
+                return;
+            }
+
+            var dialog = new EditMessageDialog(selectedMessage.Content);
+            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.NewContent))
+            {
+                await presenter.OnEditMessage(selectedMessage, dialog.NewContent);
+            }
+        }
+
+        /// <summary>
+        /// Ermittelt Chat-ID des aktuell ausgewählten Chats
+        /// </summary>
+        private async Task<string?> GetSelectedChatId()
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0) return null;
+
+            var selectedChatName = ChatroomListBox.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(selectedChatName)) return null;
+
+            if (presenter != null && repository != null)
+            {
+                var allChats = await repository.GetAllChatsAsync();
+                var chat = allChats.FirstOrDefault(c => c.ChatName == selectedChatName);
+                return chat?.ChatId;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Benutzer aus Chat entfernen (Admin-Funktion)
+        /// </summary>
+        private async void RemoveUserFromChat_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0)
+            {
+                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
+                return;
+            }
+
+            try
+            {
+                var chatId = await GetSelectedChatId();
+                if (chatId == null) return;
+
+                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
+                if (!isAdmin)
+                {
+                    ShowChatManagementError("Nur der Chat-Administrator kann Benutzer entfernen.");
+                    return;
+                }
+
+                ShowChatManagementError("Funktion wird implementiert. Verwenden Sie 'Chat-Teilnehmer anzeigen' um die Teilnehmer zu sehen.");
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Fehler beim Entfernen des Benutzers: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Zeigt alle Teilnehmer des ausgewählten Chats an
+        /// </summary>
+        private async void ShowChatParticipants_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedIndex = GetSelectedChatroomIndex();
+            if (selectedIndex < 0)
+            {
+                ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
+                return;
+            }
+
+            try
+            {
+                var chatId = await GetSelectedChatId();
+                if (chatId == null) return;
+
+                var participants = await presenter.GetChatParticipantsAsync(chatId);
+                var participantsList = string.Join("\n• ", participants);
+                
+                var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
+                var adminText = isAdmin ? "\n\n[Sie sind Administrator dieses Chats]" : "";
+                
+                MessageBox.Show($"Chat-Teilnehmer:\n\n• {participantsList}{adminText}", 
+                              "Chat-Teilnehmer", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                ShowChatManagementError($"Fehler beim Laden der Chat-Teilnehmer: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Cleanup beim Schließen: Timer und Verschlüsselungs-Cache leeren
+        /// </summary>
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             messageRefreshTimer?.Stop();
+            ChatEncryption.ClearAllChatKeys();
             base.OnClosing(e);
         }
     }

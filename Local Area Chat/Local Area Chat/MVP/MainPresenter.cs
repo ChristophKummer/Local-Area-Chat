@@ -4,6 +4,7 @@ using System;
 using Local_Area_Chat.Data;
 using System.Linq;
 using Local_Area_Chat.MVP.Models;
+using Local_Area_Chat.MVP.ViewModels;
 
 namespace Local_Area_Chat.MVP
 {
@@ -33,6 +34,296 @@ namespace Local_Area_Chat.MVP
             }
         }
 
+        #region MVP-KONFORME HANDLER METHODEN
+
+        /// <summary>
+        /// MVP-konforme Chat-Management-Handler
+        /// </summary>
+        public async Task HandleChatManagement(int selectedChatIndex)
+        {
+            if (selectedChatIndex < 0)
+            {
+                view.ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
+                return;
+            }
+
+            try
+            {
+                var chatId = await GetChatIdByIndex(selectedChatIndex);
+                if (chatId == null) return;
+
+                var isAdmin = await IsCurrentUserChatAdmin(chatId);
+                if (!isAdmin)
+                {
+                    view.ShowChatManagementError("Sie sind nicht der Administrator dieses Chats.");
+                    return;
+                }
+
+                // Business Logic: Chat-Informationen sammeln
+                var chatInfo = await GetChatManagementInfo(chatId);
+                
+                // ViewModel erstellen
+                var viewModel = new ChatManagementViewModel
+                {
+                    ChatName = chatInfo.ChatName,
+                    IsPrivate = chatInfo.IsPrivate,
+                    Participants = chatInfo.Participants,
+                    AvailableUsers = chatInfo.AvailableUsers,
+                    AdminName = chatInfo.AdminName,
+                    CanDelete = true
+                };
+
+                // Dialog über View anzeigen
+                view.ShowChatManagementDialog(viewModel);
+
+                // Verarbeitung der Ergebnisse
+                if (viewModel.DialogResult)
+                {
+                    await ProcessChatManagementResult(chatId, viewModel);
+                }
+            }
+            catch (Exception ex)
+            {
+                view.ShowChatManagementError($"Fehler beim Verwalten des Chats: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// MVP-konforme Benutzer-Hinzufügung
+        /// </summary>
+        public async Task HandleUserAddition(int selectedChatIndex)
+        {
+            if (selectedChatIndex < 0)
+            {
+                view.ShowChatManagementError("Bitte wählen Sie einen Chat aus.");
+                return;
+            }
+
+            try
+            {
+                var chatId = await GetChatIdByIndex(selectedChatIndex);
+                if (chatId == null) return;
+
+                var isAdmin = await IsCurrentUserChatAdmin(chatId);
+                if (!isAdmin)
+                {
+                    view.ShowChatManagementError("Nur der Chat-Administrator kann Benutzer hinzufügen.");
+                    return;
+                }
+
+                var availableUsers = await GetAvailableUsersForChat(chatId);
+                if (!availableUsers.Any())
+                {
+                    view.ShowChatManagementError("Keine verfügbaren Benutzer zum Hinzufügen gefunden.");
+                    return;
+                }
+
+                var viewModel = new UserSelectionViewModel
+                {
+                    Title = "Benutzer zum Chat hinzufügen",
+                    AvailableUsers = availableUsers
+                };
+
+                view.ShowUserSelectionDialog(viewModel);
+
+                if (viewModel.DialogResult && viewModel.SelectedUser != null)
+                {
+                    var success = await AddUserToChatAsAdmin(chatId, viewModel.SelectedUser.UserId);
+                    if (success)
+                    {
+                        view.ShowChatManagementSuccess($"Benutzer '{viewModel.SelectedUser.UserName}' wurde erfolgreich hinzugefügt.");
+                        view.RefreshChatList();
+                    }
+                    else
+                    {
+                        view.ShowChatManagementError("Fehler beim Hinzufügen des Benutzers.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                view.ShowChatManagementError($"Fehler beim Hinzufügen des Benutzers: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// MVP-konforme Chat-Erstellung
+        /// </summary>
+        public async Task HandleNewChatCreation()
+        {
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                view.ShowNewChatError("Sie müssen angemeldet sein, um einen Chat zu erstellen.");
+                return;
+            }
+
+            var viewModel = new InputDialogViewModel
+            {
+                Title = "Neuen Chat erstellen",
+                Prompt = "Chat-Name eingeben:"
+            };
+
+            view.ShowInputDialog(viewModel);
+
+            if (viewModel.DialogResult && !string.IsNullOrWhiteSpace(viewModel.InputValue))
+            {
+                var chatName = viewModel.InputValue.Trim();
+                
+                // Validation
+                if (chatName.Length < 2)
+                {
+                    view.ShowNewChatError("Der Chat-Name muss mindestens 2 Zeichen lang sein.");
+                    return;
+                }
+
+                if (chatName.Length > 50)
+                {
+                    view.ShowNewChatError("Der Chat-Name darf maximal 50 Zeichen lang sein.");
+                    return;
+                }
+
+                await CreateNewChatSimple(chatName);
+            }
+        }
+
+        /// <summary>
+        /// MVP-konforme Benutzer-Registrierung
+        /// </summary>
+        public async Task HandleUserRegistration()
+        {
+            var usernameViewModel = new InputDialogViewModel
+            {
+                Title = "Neuen Benutzer erstellen",
+                Prompt = "Benutzername (mindestens 3 Zeichen):"
+            };
+
+            view.ShowInputDialog(usernameViewModel);
+            if (!usernameViewModel.DialogResult || string.IsNullOrWhiteSpace(usernameViewModel.InputValue))
+                return;
+
+            var passwordViewModel = new InputDialogViewModel
+            {
+                Title = "Neuen Benutzer erstellen",
+                Prompt = "Passwort (mindestens 6 Zeichen):"
+            };
+
+            view.ShowInputDialog(passwordViewModel);
+            if (!passwordViewModel.DialogResult || string.IsNullOrWhiteSpace(passwordViewModel.InputValue))
+                return;
+
+            var username = usernameViewModel.InputValue.Trim();
+            var password = passwordViewModel.InputValue;
+
+            // Validation
+            if (username.Length < 3)
+            {
+                view.ShowRegistrationError("Der Benutzername muss mindestens 3 Zeichen lang sein.");
+                return;
+            }
+
+            if (password.Length < 6)
+            {
+                view.ShowRegistrationError("Das Passwort muss mindestens 6 Zeichen lang.");
+                return;
+            }
+
+            await RegisterUserAsync(username, password);
+        }
+
+        /// <summary>
+        /// MVP-konforme Benutzer-Anmeldung
+        /// </summary>
+        public async Task HandleUserLogin(string username, string password)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                view.ShowLoginError("Bitte Benutzername und Passwort eingeben");
+                return;
+            }
+
+            await LoginAsync(username, password);
+        }
+
+        #endregion
+
+        #region PRIVATE HELPER METHODEN
+
+        private async Task<ChatManagementInfo> GetChatManagementInfo(string chatId)
+        {
+            var chat = await GetChatByIdAsync(chatId);
+            if (chat == null) throw new InvalidOperationException("Chat nicht gefunden");
+
+            var participants = await GetChatParticipantsAsync(chatId);
+            var availableUsers = await GetAvailableUsersForChat(chatId);
+            var adminUser = await GetUserByIdAsync(chat.AdminUserId);
+
+            return new ChatManagementInfo
+            {
+                ChatName = chat.ChatName,
+                IsPrivate = chat.IsPrivate,
+                Participants = participants,
+                AvailableUsers = availableUsers,
+                AdminName = adminUser?.UserName ?? "Unbekannt"
+            };
+        }
+
+        private async Task ProcessChatManagementResult(string chatId, ChatManagementViewModel viewModel)
+        {
+            if (viewModel.DeleteChat)
+            {
+                var success = await DeleteChatAsync(chatId);
+                if (success)
+                {
+                    view.ShowChatManagementSuccess("Chat wurde erfolgreich gelöscht.");
+                    view.RefreshChatList();
+                }
+                else
+                {
+                    view.ShowChatManagementError("Fehler beim Löschen des Chats.");
+                }
+                return;
+            }
+
+            bool changesApplied = false;
+
+            // Chat-Name aktualisieren
+            if (!string.IsNullOrEmpty(viewModel.NewChatName) && viewModel.NewChatName != viewModel.ChatName)
+            {
+                changesApplied |= await UpdateChatNameAsync(chatId, viewModel.NewChatName);
+            }
+
+            // Status aktualisieren
+            if (viewModel.NewIsPrivate != viewModel.IsPrivate)
+            {
+                changesApplied |= await UpdateChatStatusAsync(chatId, viewModel.NewIsPrivate);
+            }
+
+            // Benutzer hinzufügen/entfernen
+            foreach (var user in viewModel.AddedUsers)
+            {
+                changesApplied |= await AddUserToChatAsAdmin(chatId, user.UserId);
+            }
+
+            foreach (var username in viewModel.RemovedUsers)
+            {
+                var userId = await GetUserIdByUsername(username);
+                if (userId != null)
+                {
+                    changesApplied |= await RemoveUserFromChatAsAdmin(chatId, userId);
+                }
+            }
+
+            if (changesApplied)
+            {
+                view.ShowChatManagementSuccess("Chat-Einstellungen wurden erfolgreich aktualisiert.");
+                view.RefreshChatList();
+            }
+        }
+
+        #endregion
+
+        #region BESTEHENDE METHODEN (unverändert)
+
         private void InitializeWithoutLogin()
         {
             // Zeige Login-Aufforderung
@@ -41,8 +332,6 @@ namespace Local_Area_Chat.MVP
                 "Willkommen beim Local Area Chat!",
                 "",
                 "Bitte melde dich an oder erstelle einen neuen Account!",
-
-
             };
             
             view.SetChatrooms(new List<string> { "Anmeldung erforderlich" });
@@ -297,6 +586,7 @@ namespace Local_Area_Chat.MVP
                 System.Diagnostics.Debug.WriteLine($"Fehler beim Beitreten zu öffentlichen Chats: {ex.Message}");
             }
         }
+
         public async void OnChatroomChanged(int index)
         {
             if (index >= 0 && index < userChats.Count)
@@ -305,6 +595,7 @@ namespace Local_Area_Chat.MVP
                 await LoadMessages(chatId);
             }
         }
+
         public void OnSendMessage(int chatroomIndex)
         {
             var msg = view.GetMessageInput();
@@ -645,7 +936,6 @@ namespace Local_Area_Chat.MVP
         }
 
         // Chat Management Methoden - NUR EINMAL definieren:
-
         public async Task<bool> UpdateChatNameAsync(string chatId, string newName)
         {
             if (_repository == null) return false;
@@ -677,8 +967,6 @@ namespace Local_Area_Chat.MVP
             return await _repository.GetChatByIdAsync(chatId);
         }
 
-        // KEINE zweite UpdateChatStatusAsync Methode hier!
-
         public async Task RefreshUserChatsFromDatabase()
         {
             if (_repository == null || string.IsNullOrEmpty(currentUserId))
@@ -709,5 +997,7 @@ namespace Local_Area_Chat.MVP
                 view.SetMessages(new List<string> { $"Fehler beim Laden der Chats: {ex.Message}" });
             }
         }
+
+        #endregion
     }
 }

@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Local_Area_Chat.MVP.Models;
+using Local_Area_Chat.MVP.ViewModels;
 
 namespace Local_Area_Chat.MVP
 {
@@ -32,5 +34,23 @@ namespace Local_Area_Chat.MVP
         // Chat Management-Funktionalität
         void ShowChatManagementError(string message);
         void ShowChatManagementSuccess(string message);
+        
+        // MVP-KONFORME DIALOG-METHODEN:
+        void ShowChatManagementDialog(ChatManagementViewModel viewModel);
+        void ShowInputDialog(InputDialogViewModel viewModel);
+        void ShowUserSelectionDialog(UserSelectionViewModel viewModel);
+        
+        // Bestehende Methoden für Rückwärtskompatibilität:
+        string ShowInputDialog(string title, string prompt);
+        User? ShowUserSelectionDialog(string title, List<User> users);
+        void UpdateSelectedChatroom(string chatroomName);
+        
+        // Timer control
+        void StartMessageRefresh();
+        void StopMessageRefresh();
+        
+        // Admin functionality
+        void ShowAdminOptions(bool isAdmin);
+        void RefreshChatList();
     }
 }

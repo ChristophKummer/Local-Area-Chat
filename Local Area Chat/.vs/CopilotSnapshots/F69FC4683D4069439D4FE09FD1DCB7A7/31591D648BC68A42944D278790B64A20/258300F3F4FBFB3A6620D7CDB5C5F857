@@ -1,0 +1,23 @@
+﻿using System.Collections.Generic;
+using Local_Area_Chat.MVP.Models;
+
+namespace Local_Area_Chat.MVP.ViewModels
+{
+    public class ChatManagementViewModel
+    {
+        public string ChatName { get; set; } = "";
+        public bool IsPrivate { get; set; }
+        public List<string> Participants { get; set; } = new();
+        public List<User> AvailableUsers { get; set; } = new();
+        public string AdminName { get; set; } = "";
+        public bool CanDelete { get; set; }
+        
+        // Results from dialog
+        public bool DialogResult { get; set; }
+        public string? NewChatName { get; set; }
+        public bool NewIsPrivate { get; set; }
+        public List<User> AddedUsers { get; set; } = new();
+        public List<string> RemovedUsers { get; set; } = new();
+        public bool DeleteChat { get; set; }
+    }
+}

@@ -1,0 +1,69 @@
+﻿using System.Collections.Generic;
+using Local_Area_Chat.MVP.Models;
+
+namespace Local_Area_Chat.MVP
+{
+    public interface IMainView
+    {
+        void SetChatrooms(List<string> chatrooms);
+        void SetMessages(List<string> messages);
+        string GetMessageInput();
+        void ClearMessageInput();
+        int GetSelectedChatroomIndex();
+        
+        // Login-Funktionalität
+        string GetLoginUsername();
+        string GetLoginPassword();
+        void ShowLoginError(string message);
+        void ShowLoginSuccess(string username);
+        void ClearLoginFields();
+        
+        // Registration-Funktionalität
+        void ShowRegistrationError(string message);
+        void ShowRegistrationSuccess(string username);
+        
+        // User Display-Funktionalität
+        void SetCurrentUserDisplay(string username);
+        void ClearCurrentUserDisplay();
+        
+        // Chat Creation-Funktionalität
+        void ShowNewChatError(string message);
+        void ShowNewChatSuccess(string chatName);
+        
+        // Chat Management-Funktionalität
+        void ShowChatManagementError(string message);
+        void ShowChatManagementSuccess(string message);
+        
+        // NEU: Chat-Management Dialog Interface
+        ChatManagementDialogResult ShowChatManagementDialog(ChatManagementDialogData data);
+        
+        // NEU: User Selection Dialog Interface
+        User? ShowUserSelectionDialog(string title, List<User> users);
+        
+        // NEU: Input Dialog Interface
+        string ShowInputDialog(string title, string prompt);
+        
+        // NEU: Confirmation Dialog Interface
+        bool ShowConfirmationDialog(string message, string title = "Bestätigung");
+    }
+    
+    // NEU: Data Transfer Objects für Dialogs
+    public class ChatManagementDialogData
+    {
+        public string ChatName { get; set; } = "";
+        public bool IsPrivate { get; set; }
+        public List<string> Participants { get; set; } = new();
+        public List<User> AvailableUsers { get; set; } = new();
+        public string AdminName { get; set; } = "";
+    }
+    
+    public class ChatManagementDialogResult
+    {
+        public bool DialogCompleted { get; set; }
+        public bool DeleteChat { get; set; }
+        public string? NewChatName { get; set; }
+        public bool IsPrivate { get; set; }
+        public List<User> AddedUsers { get; set; } = new();
+        public List<string> RemovedUsers { get; set; } = new();
+    }
+}
