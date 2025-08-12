@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using Local_Area_Chat.MVP.Models;
+using Local_Area_Chat.Security; // NEU: Für ChatEncryption
 
 namespace Local_Area_Chat.Data
 {
@@ -36,14 +37,51 @@ namespace Local_Area_Chat.Data
         public async Task<List<Chat>> GetAllChatsAsync() =>
             await _chats.Find(_ => true).ToListAsync();
 
-        public async Task<List<Chat>> GetChatsByUserIdAsync(string userId) =>
-            await _chats.Find(c => c.UserIds.Contains(userId)).ToListAsync();
+        public async Task<List<Chat>> GetChatsByUserIdAsync(string userId)
+        {
+            var chats = await _chats.Find(c => c.UserIds.Contains(userId)).ToListAsync();
+            
+            // NEU: Alle Chat-Schlüssel in Cache laden
+            foreach (var chat in chats)
+            {
+                ChatEncryption.LoadChatKey(chat);
+            }
+            
+            return chats;
+        }
 
-        public async Task<Chat?> GetChatByIdAsync(string chatId) =>
-            await _chats.Find(c => c.ChatId == chatId).FirstOrDefaultAsync();
+        public async Task<Chat?> GetChatByIdAsync(string chatId)
+        {
+            var chat = await _chats.Find(c => c.ChatId == chatId).FirstOrDefaultAsync();
+            
+            // NEU: Chat-Schlüssel in Cache laden
+            if (chat != null)
+            {
+                ChatEncryption.LoadChatKey(chat);
+            }
+            
+            return chat;
+        }
 
-        public async Task AddChatAsync(Chat chat) =>
+        public async Task AddChatAsync(Chat chat)
+        {
+            // NEU: Automatisch Verschlüsselungsschlüssel generieren wenn nicht vorhanden
+            if (string.IsNullOrEmpty(chat.EncryptionKey))
+            {
+                var (key, iv) = ChatEncryption.GenerateChatEncryptionKey();
+                chat.EncryptionKey = key;
+                chat.EncryptionIV = iv;
+                chat.KeyCreatedAt = DateTime.UtcNow;
+                chat.KeyVersion = 1;
+            }
+            
             await _chats.InsertOneAsync(chat);
+            
+            // NEU: Schlüssel in Cache laden
+            ChatEncryption.LoadChatKey(chat);
+            
+            System.Diagnostics.Debug.WriteLine($"?? Chat '{chat.ChatName}' mit Verschlüsselung erstellt");
+        }
 
         public async Task UpdateChatAsync(Chat chat) =>
             await _chats.ReplaceOneAsync(c => c.Id == chat.Id, chat);
@@ -66,6 +104,9 @@ namespace Local_Area_Chat.Data
         {
             try
             {
+                // NEU: Chat-Schlüssel aus Cache entfernen
+                ChatEncryption.UnloadChatKey(chatId);
+                
                 // Delete all messages in the chat first
                 await _messages.DeleteManyAsync(m => m.ChatId == chatId);
                 
@@ -109,15 +150,40 @@ namespace Local_Area_Chat.Data
             }
         }
 
-        // Message-Methoden
-        public async Task<List<Message>> GetMessagesByChatIdAsync(string chatId) =>
-            await _messages.Find(m => m.ChatId == chatId).SortBy(m => m.Timestamp).ToListAsync();
+        // Message-Methoden - NEU: Mit Chat-Verschlüsselung
+        public async Task<List<Message>> GetMessagesByChatIdAsync(string chatId)
+        {
+            var messages = await _messages.Find(m => m.ChatId == chatId).SortBy(m => m.Timestamp).ToListAsync();
+            
+            // NEU: Entschlüsselung der Nachrichten mit Chat-spezifischem Schlüssel
+            foreach (var message in messages)
+            {
+                message.Content = ChatEncryption.DecryptForChat(message.Content, chatId);
+            }
+            
+            return messages;
+        }
 
-        public async Task AddMessageAsync(Message message) =>
-            await _messages.InsertOneAsync(message);
+        public async Task AddMessageAsync(Message message)
+        {
+            // NEU: Verschlüsselung der Nachricht mit Chat-spezifischem Schlüssel
+            var encryptedMessage = new Message
+            {
+                ChatId = message.ChatId,
+                UserId = message.UserId,
+                Content = ChatEncryption.EncryptForChat(message.Content, message.ChatId),
+                Timestamp = message.Timestamp
+            };
+            
+            await _messages.InsertOneAsync(encryptedMessage);
+        }
 
-        public async Task UpdateMessageAsync(Message message) =>
+        public async Task UpdateMessageAsync(Message message)
+        {
+            // NEU: Verschlüsselung der Nachricht vor dem Update
+            message.Content = ChatEncryption.EncryptForChat(message.Content, message.ChatId);
             await _messages.ReplaceOneAsync(m => m.Id == message.Id, message);
+        }
 
         // User-Methoden
         public async Task<User?> GetUserByIdAsync(string userId) =>
@@ -161,6 +227,9 @@ namespace Local_Area_Chat.Data
         // Alle Daten löschen (für Neuerstellung)
         public async Task ClearAllDataAsync()
         {
+            // NEU: Alle Chat-Schlüssel aus Cache entfernen
+            ChatEncryption.ClearAllChatKeys();
+            
             await _chats.DeleteManyAsync(_ => true);
             await _messages.DeleteManyAsync(_ => true);
             await _users.DeleteManyAsync(_ => true);
@@ -190,6 +259,48 @@ namespace Local_Area_Chat.Data
 
             var allUsers = await GetAllUsersAsync();
             return allUsers.Where(u => !chat.UserIds.Contains(u.UserId)).ToList();
+        }
+
+        // NEU: Chat-Schlüssel rotieren
+        public async Task<bool> RotateChatKeyAsync(string chatId)
+        {
+            try
+            {
+                var chat = await GetChatByIdAsync(chatId);
+                if (chat == null) return false;
+                
+                var (newKey, newIV) = ChatEncryption.RotateChatKey(chatId);
+                
+                var filter = Builders<Chat>.Filter.Eq(c => c.ChatId, chatId);
+                var update = Builders<Chat>.Update
+                    .Set(c => c.EncryptionKey, newKey)
+                    .Set(c => c.EncryptionIV, newIV)
+                    .Set(c => c.KeyCreatedAt, DateTime.UtcNow)
+                    .Inc(c => c.KeyVersion, 1);
+                    
+                var result = await _chats.UpdateOneAsync(filter, update);
+                return result.ModifiedCount > 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Fehler bei Chat-Schlüssel-Rotation: {ex.Message}");
+                return false;
+            }
+        }
+
+        // NEU: Chat-Schlüssel für neuen Teilnehmer verfügbar machen
+        public async Task<Chat?> GetChatWithKeyForUser(string chatId, string userId)
+        {
+            var chat = await GetChatByIdAsync(chatId);
+            
+            if (chat != null && chat.UserIds.Contains(userId))
+            {
+                // Benutzer ist Teilnehmer - Schlüssel laden
+                ChatEncryption.LoadChatKey(chat);
+                return chat;
+            }
+            
+            return null; // Kein Zugriff
         }
     }
 }

@@ -3,8 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|c:\\users\\chris\\source\\repos\\local-area-chat\\local area chat\\local area chat\\security\\chatencryption.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|solutionrelative:local area chat\\security\\chatencryption.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|c:\\users\\chris\\source\\repos\\local-area-chat\\local area chat\\local area chat\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|solutionrelative:local area chat\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|c:\\users\\chris\\source\\repos\\local-area-chat\\local area chat\\local area chat\\mvp\\models\\chat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|solutionrelative:local area chat\\mvp\\models\\chat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|c:\\users\\chris\\source\\repos\\local-area-chat\\local area chat\\local area chat\\data\\mongorepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|solutionrelative:local area chat\\data\\mongorepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -36,20 +48,11 @@
         },
         {
           "DockedHeight": 102,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 4,
           "Children": [
             {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "MainWindow.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs",
-              "RelativeDocumentMoniker": "Local Area Chat\\MainWindow.xaml.cs",
-              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs",
-              "RelativeToolTip": "Local Area Chat\\MainWindow.xaml.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAABoAAAAuAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-12T15:50:13.116Z",
-              "EditorCaption": ""
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{004be353-6879-467c-9d1e-9ac23cdf6d49}"
             },
             {
               "$type": "Bookmark",
@@ -58,6 +61,58 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MongoRepository.cs",
+              "DocumentMoniker": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\Data\\MongoRepository.cs",
+              "RelativeDocumentMoniker": "Local Area Chat\\Data\\MongoRepository.cs",
+              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\Data\\MongoRepository.cs",
+              "RelativeToolTip": "Local Area Chat\\Data\\MongoRepository.cs",
+              "ViewState": "AgIAAC0BAAAAAAAAAEBVwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-12T20:40:26.389Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ChatEncryption.cs",
+              "DocumentMoniker": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\Security\\ChatEncryption.cs",
+              "RelativeDocumentMoniker": "Local Area Chat\\Security\\ChatEncryption.cs",
+              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\Security\\ChatEncryption.cs",
+              "RelativeToolTip": "Local Area Chat\\Security\\ChatEncryption.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-12T20:38:32.42Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Chat.cs",
+              "DocumentMoniker": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MVP\\Models\\Chat.cs",
+              "RelativeDocumentMoniker": "Local Area Chat\\MVP\\Models\\Chat.cs",
+              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MVP\\Models\\Chat.cs",
+              "RelativeToolTip": "Local Area Chat\\MVP\\Models\\Chat.cs",
+              "ViewState": "AgIAACoAAAAAAAAAAABBwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-12T20:37:25.636Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Local Area Chat\\MainWindow.xaml.cs",
+              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs",
+              "RelativeToolTip": "Local Area Chat\\MainWindow.xaml.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABsAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-12T15:50:13.116Z",
+              "EditorCaption": ""
             }
           ]
         }

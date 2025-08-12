@@ -2,6 +2,7 @@ using Local_Area_Chat.Dialogs;
 using Local_Area_Chat.MVP;
 using Local_Area_Chat.Data;
 using Local_Area_Chat.Config;  // HINZUGEFÜGT: Für DatabaseConfig
+using Local_Area_Chat.Security; // NEU: Für ChatEncryption
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -25,6 +26,7 @@ namespace Local_Area_Chat
 
     //IP-Adressenanpassung auf Raspberry falls nötig
     //sudo ip addr add 192.168.1.2/24 dev eth0
+    //mongodb://Admin:Admin@192.168.1.2:27017/?authSource=admin
 
     public partial class MainWindow : Window, IMainView
     {

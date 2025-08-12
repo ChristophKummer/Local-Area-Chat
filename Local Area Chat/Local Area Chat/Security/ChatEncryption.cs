@@ -1,0 +1,191 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using Local_Area_Chat.MVP.Models;
+
+namespace Local_Area_Chat.Security
+{
+    public static class ChatEncryption
+    {
+        // Cache für Chat-Schlüssel (in Memory für Performance)
+        private static Dictionary<string, (string key, string iv)> _chatKeyCache = new();
+
+        /// <summary>
+        /// Lädt den Verschlüsselungsschlüssel für einen Chat in den Cache
+        /// </summary>
+        public static void LoadChatKey(Chat chat)
+        {
+            if (string.IsNullOrEmpty(chat.EncryptionKey) || string.IsNullOrEmpty(chat.EncryptionIV))
+            {
+                System.Diagnostics.Debug.WriteLine($"?? Chat {chat.ChatName} hat keinen Verschlüsselungsschlüssel");
+                return;
+            }
+
+            _chatKeyCache[chat.ChatId] = (chat.EncryptionKey, chat.EncryptionIV);
+            System.Diagnostics.Debug.WriteLine($"?? Schlüssel für Chat '{chat.ChatName}' geladen");
+        }
+
+        /// <summary>
+        /// Entfernt Chat-Schlüssel aus dem Cache
+        /// </summary>
+        public static void UnloadChatKey(string chatId)
+        {
+            if (_chatKeyCache.ContainsKey(chatId))
+            {
+                _chatKeyCache.Remove(chatId);
+                System.Diagnostics.Debug.WriteLine($"?? Schlüssel für Chat {chatId} entfernt");
+            }
+        }
+
+        /// <summary>
+        /// Löscht alle Chat-Schlüssel aus dem Cache (bei Logout)
+        /// </summary>
+        public static void ClearAllChatKeys()
+        {
+            _chatKeyCache.Clear();
+            System.Diagnostics.Debug.WriteLine("?? Alle Chat-Schlüssel aus Cache entfernt");
+        }
+
+        /// <summary>
+        /// Verschlüsselt eine Nachricht mit dem Chat-spezifischen Schlüssel
+        /// </summary>
+        public static string EncryptForChat(string plainText, string chatId)
+        {
+            if (string.IsNullOrEmpty(plainText))
+                return plainText;
+
+            if (!_chatKeyCache.ContainsKey(chatId))
+            {
+                System.Diagnostics.Debug.WriteLine($"?? Kein Schlüssel für Chat {chatId} verfügbar - Text bleibt unverschlüsselt");
+                return plainText;
+            }
+
+            try
+            {
+                var (keyBase64, ivBase64) = _chatKeyCache[chatId];
+                var key = Convert.FromBase64String(keyBase64);
+                var iv = Convert.FromBase64String(ivBase64);
+
+                using var aes = Aes.Create();
+                aes.Key = key;
+                aes.IV = iv;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+
+                using var encryptor = aes.CreateEncryptor();
+                using var msEncrypt = new MemoryStream();
+                using var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write);
+                using var swEncrypt = new StreamWriter(csEncrypt);
+                
+                swEncrypt.Write(plainText);
+                swEncrypt.Close();
+                
+                var encrypted = Convert.ToBase64String(msEncrypt.ToArray());
+                System.Diagnostics.Debug.WriteLine($"?? Nachricht für Chat {chatId} verschlüsselt: {plainText.Length} ? {encrypted.Length} Zeichen");
+                return encrypted;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Verschlüsselungsfehler für Chat {chatId}: {ex.Message}");
+                return plainText;
+            }
+        }
+
+        /// <summary>
+        /// Entschlüsselt eine Nachricht mit dem Chat-spezifischen Schlüssel
+        /// </summary>
+        public static string DecryptForChat(string encryptedText, string chatId)
+        {
+            if (string.IsNullOrEmpty(encryptedText))
+                return encryptedText;
+
+            if (!_chatKeyCache.ContainsKey(chatId))
+            {
+                System.Diagnostics.Debug.WriteLine($"?? Kein Schlüssel für Chat {chatId} verfügbar");
+                return "[Verschlüsselte Nachricht - Chat-Schlüssel nicht verfügbar]";
+            }
+
+            try
+            {
+                var (keyBase64, ivBase64) = _chatKeyCache[chatId];
+                var key = Convert.FromBase64String(keyBase64);
+                var iv = Convert.FromBase64String(ivBase64);
+                
+                byte[] cipherBytes = Convert.FromBase64String(encryptedText);
+
+                using var aes = Aes.Create();
+                aes.Key = key;
+                aes.IV = iv;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+
+                using var decryptor = aes.CreateDecryptor();
+                using var msDecrypt = new MemoryStream(cipherBytes);
+                using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
+                using var srDecrypt = new StreamReader(csDecrypt);
+                
+                var decrypted = srDecrypt.ReadToEnd();
+                System.Diagnostics.Debug.WriteLine($"?? Nachricht für Chat {chatId} entschlüsselt: {encryptedText.Length} ? {decrypted.Length} Zeichen");
+                return decrypted;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"? Entschlüsselungsfehler für Chat {chatId}: {ex.Message}");
+                return "[Nachricht konnte nicht entschlüsselt werden]";
+            }
+        }
+
+        /// <summary>
+        /// Generiert einen neuen AES-Schlüssel für einen Chat
+        /// </summary>
+        public static (string key, string iv) GenerateChatEncryptionKey()
+        {
+            using var aes = Aes.Create();
+            aes.GenerateKey();
+            aes.GenerateIV();
+            
+            var key = Convert.ToBase64String(aes.Key);
+            var iv = Convert.ToBase64String(aes.IV);
+            
+            System.Diagnostics.Debug.WriteLine($"?? Neuer Chat-Schlüssel generiert: {key[..16]}...");
+            return (key, iv);
+        }
+
+        /// <summary>
+        /// Prüft ob ein Chat-Schlüssel im Cache verfügbar ist
+        /// </summary>
+        public static bool HasChatKey(string chatId)
+        {
+            return _chatKeyCache.ContainsKey(chatId);
+        }
+
+        /// <summary>
+        /// Gibt Informationen über geladene Chat-Schlüssel zurück
+        /// </summary>
+        public static string GetEncryptionStatus()
+        {
+            var loadedChats = _chatKeyCache.Count;
+            if (loadedChats == 0)
+                return "? Keine Chat-Schlüssel geladen";
+                
+            var chatIds = string.Join(", ", _chatKeyCache.Keys);
+            return $"?? {loadedChats} Chat-Schlüssel geladen\nChats: {chatIds}";
+        }
+
+        /// <summary>
+        /// Rotiert den Schlüssel für einen Chat (neuer Schlüssel)
+        /// </summary>
+        public static (string newKey, string newIV) RotateChatKey(string chatId)
+        {
+            var (newKey, newIV) = GenerateChatEncryptionKey();
+            
+            // Neuen Schlüssel in Cache laden
+            _chatKeyCache[chatId] = (newKey, newIV);
+            
+            System.Diagnostics.Debug.WriteLine($"?? Schlüssel für Chat {chatId} rotiert");
+            return (newKey, newIV);
+        }
+    }
+}
