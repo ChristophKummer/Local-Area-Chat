@@ -1,4 +1,4 @@
-using Local_Area_Chat.Dialogs;
+Ôªøusing Local_Area_Chat.Dialogs;
 using Local_Area_Chat.MVP;
 using Local_Area_Chat.Data;
 using Local_Area_Chat.Config;
@@ -17,9 +17,16 @@ using Local_Area_Chat.MVP.Models;
 namespace Local_Area_Chat
 {
     /// <summary>
-    /// WPF View-Klasse f¸r MVP-Pattern - implementiert IMainView Interface
-    /// Hauptfenster f¸r Local Area Chat mit verschl¸sselter MongoDB-Kommunikation
+    /// WPF View-Klasse f√ºr MVP-Pattern - implementiert IMainView Interface
+    /// Hauptfenster f√ºr Local Area Chat mit verschl√ºsselter MongoDB-Kommunikation
     /// </summary>
+    /// 
+    // Raspberry SSH-PW: ITS2025
+    // sudo ip addr add 192.168.1.2/24 dev eth0
+
+    //String fuer MongoDB Compass
+    //mongodb://Admin:Admin@192.168.1.2:27017/?authSource=admin
+
     public partial class MainWindow : Window, IMainView
     {
         private MainPresenter presenter;
@@ -45,40 +52,40 @@ namespace Local_Area_Chat
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("?? Starte Datenbankverbindung zum Raspberry Pi...");
+                System.Diagnostics.Debug.WriteLine("üîÑ Starte Datenbankverbindung zum Raspberry Pi...");
                 
                 var (repo, message) = await DatabaseConfig.ConnectToDatabase();
                 repository = repo;
                 
                 if (repository != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"? {message}");
+                    System.Diagnostics.Debug.WriteLine($"‚úÖ {message}");
                     MessageBox.Show(message, "Raspberry Pi Verbindung erfolgreich", 
                                   MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    throw new Exception("Keine verf¸gbare MongoDB-Verbindung gefunden");
+                    throw new Exception("Keine verf√ºgbare MongoDB-Verbindung gefunden");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"? Datenbankverbindung fehlgeschlagen: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"‚ùå Datenbankverbindung fehlgeschlagen: {ex.Message}");
                 
                 MessageBox.Show($"MongoDB-Verbindung zum Raspberry Pi fehlgeschlagen: {ex.Message}\n\n" +
-                              "? Raspberry Pi MongoDB Status:\n" +
-                              "   MongoDB l‰uft und ist bereit f¸r Verbindungen\n" +
+                              "‚úÖ Raspberry Pi MongoDB Status:\n" +
+                              "   MongoDB l√§uft und ist bereit f√ºr Verbindungen\n" +
                               "   IP: 192.168.1.2:27017\n\n" +
-                              "?? Mˆgliche Lˆsungen:\n" +
+                              "üîç M√∂gliche L√∂sungen:\n" +
                               "1. Netzwerk-Test von Windows:\n" +
                               "   ping 192.168.1.2\n" +
                               "   Test-NetConnection -ComputerName 192.168.1.2 -Port 27017\n\n" +
-                              "2. Windows Firewall pr¸fen\n" +
+                              "2. Windows Firewall pr√ºfen\n" +
                               "3. MongoDB Container Status auf Raspberry Pi:\n" +
                               "   ssh christoph@192.168.1.2\n" +
                               "   docker ps\n" +
                               "   docker logs LAC\n\n" +
-                              "4. Container neu starten (falls nˆtig):\n" +
+                              "4. Container neu starten (falls n√∂tig):\n" +
                               "   docker stop LAC && docker rm LAC\n" +
                               "   docker run -d --name LAC -e MONGO_INITDB_ROOT_USERNAME=Admin -e MONGO_INITDB_ROOT_PASSWORD=Admin -p 0.0.0.0:27017:27017 --restart unless-stopped mongo\n\n" +
                               "Arbeite im Offline-Modus...",
@@ -88,7 +95,7 @@ namespace Local_Area_Chat
         }
         
         /// <summary>
-        /// Initialisiert Timer f¸r automatische Message-Updates (alle 3 Sekunden)
+        /// Initialisiert Timer f√ºr automatische Message-Updates (alle 3 Sekunden)
         /// </summary>
         private void InitializeMessageRefreshTimer()
         {
@@ -116,7 +123,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Konfiguriert MessagesListBox f¸r Textwrapping und Scrollverhalten
+        /// Konfiguriert MessagesListBox f√ºr Textwrapping und Scrollverhalten
         /// </summary>
         private void ConfigureMessagesListBox()
         {
@@ -138,7 +145,7 @@ namespace Local_Area_Chat
         #region IMainView Implementation
 
         /// <summary>
-        /// Setzt Chat-Liste in der UI und w‰hlt ersten Chat aus
+        /// Setzt Chat-Liste in der UI und w√§hlt ersten Chat aus
         /// </summary>
         public void SetChatrooms(List<string> chatrooms)
         {
@@ -295,7 +302,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Erstellt dynamischen Input-Dialog f¸r Texteingaben
+        /// Erstellt dynamischen Input-Dialog f√ºr Texteingaben
         /// </summary>
         public string ShowInputDialog(string title, string prompt)
         {
@@ -406,7 +413,7 @@ namespace Local_Area_Chat
 
             var promptLabel = new TextBlock
             {
-                Text = "W‰hlen Sie einen Benutzer aus:",
+                Text = "W√§hlen Sie einen Benutzer aus:",
                 Margin = new Thickness(20, 20, 20, 10),
                 FontSize = 14
             };
@@ -472,7 +479,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Aktualisiert ausgew‰hlten Chat-Namen in der UI
+        /// Aktualisiert ausgew√§hlten Chat-Namen in der UI
         /// </summary>
         public void UpdateSelectedChatroom(string chatroomName)
         {
@@ -498,7 +505,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// L‰dt Chat-Liste asynchron aus der Datenbank neu
+        /// L√§dt Chat-Liste asynchron aus der Datenbank neu
         /// </summary>
         public void RefreshChatList()
         {
@@ -510,7 +517,7 @@ namespace Local_Area_Chat
         #region Event Handlers
 
         /// <summary>
-        /// Chat-Auswahl ge‰ndert: L‰dt Nachrichten und startet Timer
+        /// Chat-Auswahl ge√§ndert: L√§dt Nachrichten und startet Timer
         /// </summary>
         private void ChatroomListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -546,7 +553,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Login-Popup ˆffnen und Fokus setzen
+        /// Login-Popup √∂ffnen und Fokus setzen
         /// </summary>
         private void LoginToggleButton_Click(object sender, RoutedEventArgs e)
         {
@@ -555,7 +562,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Auto-Close Timer f¸r Login-Popup starten
+        /// Auto-Close Timer f√ºr Login-Popup starten
         /// </summary>
         private void LoginPopup_MouseLeave(object sender, MouseEventArgs e)
         {
@@ -569,7 +576,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Auto-Close Timer f¸r Login-Popup stoppen
+        /// Auto-Close Timer f√ºr Login-Popup stoppen
         /// </summary>
         private void LoginPopup_MouseEnter(object sender, MouseEventArgs e)
         {
@@ -577,7 +584,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Login-Popup automatisch schlieﬂen nach Timeout
+        /// Login-Popup automatisch schlie√üen nach Timeout
         /// </summary>
         private void LoginCloseTimer_Tick(object? sender, EventArgs e)
         {
@@ -609,22 +616,22 @@ namespace Local_Area_Chat
 
         private void HamburgerMenu_Profile_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Profil geˆffnet");
+            MessageBox.Show("Profil ge√∂ffnet");
             ProfilePanel.Visibility = Visibility.Visible;
         }
 
         /// <summary>
-        /// Logout mit Sicherheitsabfrage und Verschl¸sselungs-Cleanup
+        /// Logout mit Sicherheitsabfrage und Verschl√ºsselungs-Cleanup
         /// </summary>
         private void HamburgerMenu_Logout_Click(object sender, RoutedEventArgs e)
         {
-            var result = MessageBox.Show("Mˆchten Sie sich wirklich abmelden?", "Abmelden", 
+            var result = MessageBox.Show("M√∂chten Sie sich wirklich abmelden?", "Abmelden", 
                                        MessageBoxButton.YesNo, MessageBoxImage.Question);
             
             if (result == MessageBoxResult.Yes)
             {
                 ChatEncryption.ClearAllChatKeys();
-                System.Diagnostics.Debug.WriteLine("?? Alle Chat-Schl¸ssel entfernt");
+                System.Diagnostics.Debug.WriteLine("üîí Alle Chat-Schl√ºssel entfernt");
                 
                 presenter.Logout();
                 MessageBox.Show("Sie wurden erfolgreich abgemeldet", "Abgemeldet", 
@@ -638,7 +645,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Profil-Panel schlieﬂen und Felder zur¸cksetzen
+        /// Profil-Panel schlie√üen und Felder zur√ºcksetzen
         /// </summary>
         private void ProfileCloseButton_Click(object sender, RoutedEventArgs e)
         {
@@ -685,7 +692,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Nachricht bearbeiten: Pr¸ft Berechtigung und ˆffnet Dialog
+        /// Nachricht bearbeiten: Pr√ºft Berechtigung und √∂ffnet Dialog
         /// </summary>
         private async void EditMessage_Click(object sender, RoutedEventArgs e)
         {
@@ -705,7 +712,7 @@ namespace Local_Area_Chat
 
             if (!presenter.CanCurrentUserEditMessage(selectedMessage))
             {
-                MessageBox.Show("Sie kˆnnen nur Ihre eigenen Nachrichten bearbeiten.", 
+                MessageBox.Show("Sie k√∂nnen nur Ihre eigenen Nachrichten bearbeiten.", 
                               "Bearbeitung nicht erlaubt", 
                               MessageBoxButton.OK, 
                               MessageBoxImage.Warning);
@@ -720,7 +727,7 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Ermittelt Chat-ID des aktuell ausgew‰hlten Chats
+        /// Ermittelt Chat-ID des aktuell ausgew√§hlten Chats
         /// </summary>
         private async Task<string?> GetSelectedChatId()
         {
@@ -748,7 +755,7 @@ namespace Local_Area_Chat
             var selectedIndex = GetSelectedChatroomIndex();
             if (selectedIndex < 0)
             {
-                ShowChatManagementError("Bitte w‰hlen Sie einen Chat aus.");
+                ShowChatManagementError("Bitte w√§hlen Sie einen Chat aus.");
                 return;
             }
 
@@ -773,14 +780,14 @@ namespace Local_Area_Chat
         }
 
         /// <summary>
-        /// Zeigt alle Teilnehmer des ausgew‰hlten Chats an
+        /// Zeigt alle Teilnehmer des ausgew√§hlten Chats an
         /// </summary>
         private async void ShowChatParticipants_Click(object sender, RoutedEventArgs e)
         {
             var selectedIndex = GetSelectedChatroomIndex();
             if (selectedIndex < 0)
             {
-                ShowChatManagementError("Bitte w‰hlen Sie einen Chat aus.");
+                ShowChatManagementError("Bitte w√§hlen Sie einen Chat aus.");
                 return;
             }
 
@@ -790,12 +797,12 @@ namespace Local_Area_Chat
                 if (chatId == null) return;
 
                 var participants = await presenter.GetChatParticipantsAsync(chatId);
-                var participantsList = string.Join("\nï ", participants);
+                var participantsList = string.Join("\n‚Ä¢ ", participants);
                 
                 var isAdmin = await presenter.IsCurrentUserChatAdmin(chatId);
                 var adminText = isAdmin ? "\n\n[Sie sind Administrator dieses Chats]" : "";
                 
-                MessageBox.Show($"Chat-Teilnehmer:\n\nï {participantsList}{adminText}", 
+                MessageBox.Show($"Chat-Teilnehmer:\n\n‚Ä¢ {participantsList}{adminText}", 
                               "Chat-Teilnehmer", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
@@ -807,7 +814,7 @@ namespace Local_Area_Chat
         #endregion
 
         /// <summary>
-        /// Cleanup beim Schlieﬂen: Timer und Verschl¸sselungs-Cache leeren
+        /// Cleanup beim Schlie√üen: Timer und Verschl√ºsselungs-Cache leeren
         /// </summary>
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {

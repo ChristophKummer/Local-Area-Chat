@@ -1,7 +1,16 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|c:\\users\\chris\\source\\repos\\local-area-chat\\local area chat\\local area chat\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|solutionrelative:local area chat\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|c:\\users\\chris\\source\\repos\\local-area-chat\\local area chat\\local area chat\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{1DEA2866-1215-4F46-8424-8C3F04B5FDB4}|Local Area Chat\\Local Area Chat.csproj|solutionrelative:local area chat\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 1,
@@ -27,11 +36,23 @@
         },
         {
           "DockedHeight": 102,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{004be353-6879-467c-9d1e-9ac23cdf6d49}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "Local Area Chat\\MainWindow.xaml",
+              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml",
+              "RelativeToolTip": "Local Area Chat\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-08-12T22:34:26.859Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Bookmark",
@@ -40,6 +61,19 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Local Area Chat\\MainWindow.xaml.cs",
+              "ToolTip": "C:\\Users\\chris\\source\\repos\\Local-Area-Chat\\Local Area Chat\\Local Area Chat\\MainWindow.xaml.cs",
+              "RelativeToolTip": "Local Area Chat\\MainWindow.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-12T22:27:42.987Z",
+              "EditorCaption": ""
             }
           ]
         }
