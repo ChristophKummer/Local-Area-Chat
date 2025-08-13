@@ -132,7 +132,7 @@ namespace Local_Area_Chat.Dialogs {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/Local Area Chat;component/dialogs/chatmanagementdialog.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/Local Area Chat;V1.0.0.0;component/dialogs/chatmanagementdialog.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Dialogs\ChatManagementDialog.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

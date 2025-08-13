@@ -51,6 +51,10 @@
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
           "dependencies": {
+            "DocumentFormat.OpenXml": {
+              "target": "Package",
+              "version": "[3.3.0, )"
+            },
             "MongoDB.Driver": {
               "target": "Package",
               "version": "[3.4.2, )"

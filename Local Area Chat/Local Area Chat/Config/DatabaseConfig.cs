@@ -18,7 +18,7 @@ namespace Local_Area_Chat.Config
             },
             new ConnectionConfig 
             { 
-                IP = "192.168.31.254", 
+                IP = "10.0.0.56", 
                 Name = "Raspberry Pi (WLAN)",
                 HasAuth = true 
             },
@@ -48,7 +48,7 @@ namespace Local_Area_Chat.Config
             {
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine($"?? Versuche Verbindung zu {config.Name} ({config.IP})...");
+                    System.Diagnostics.Debug.WriteLine($"Versuche Verbindung zu {config.Name} ({config.IP})...");
                     
                     var connectionString = GetConnectionString(config);
                     var repo = new MongoRepository(connectionString, "LAC");
@@ -57,22 +57,22 @@ namespace Local_Area_Chat.Config
                     try
                     {
                         await repo.GetAllChatsAsync();
-                        System.Diagnostics.Debug.WriteLine($"? Erfolgreich verbunden mit {config.Name}");
+                        System.Diagnostics.Debug.WriteLine($"Erfolgreich verbunden mit {config.Name}");
                         return (repo, $"? Verbunden mit: {config.Name} ({config.IP})");
                     }
                     catch (Exception testEx)
                     {
-                        System.Diagnostics.Debug.WriteLine($"?? Test fehlgeschlagen für {config.Name}: {testEx.Message}");
+                        System.Diagnostics.Debug.WriteLine($"Test fehlgeschlagen für {config.Name}: {testEx.Message}");
                         throw;
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"? Verbindung zu {config.Name} fehlgeschlagen: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Verbindung zu {config.Name} fehlgeschlagen: {ex.Message}");
                 }
             }
             
-            return (null, "? Keine Datenbankverbindung verfügbar");
+            return (null, "Keine Datenbankverbindung verfügbar");
         }
         
         // Synchrone Version für Tests
