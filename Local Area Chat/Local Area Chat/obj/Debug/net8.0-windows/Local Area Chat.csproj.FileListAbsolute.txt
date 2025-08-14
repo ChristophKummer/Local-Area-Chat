@@ -31,3 +31,6 @@ C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.pdb
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\Local Area Chat.genruntimeconfig.cache
 C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\obj\Debug\net8.0-windows\ref\Local Area Chat.dll
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\DocumentFormat.OpenXml.dll
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\DocumentFormat.OpenXml.Framework.dll
+C:\Users\chris\source\repos\Local-Area-Chat\Local Area Chat\Local Area Chat\bin\Debug\net8.0-windows\System.IO.Packaging.dll

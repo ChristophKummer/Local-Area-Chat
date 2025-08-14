@@ -50,7 +50,7 @@
 
             <!-- Chatteilnehmer -->
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Chatteilnehmer:" Margin="0,0,0,5"/>
-            <ListBox x:Name="ParticipantsListBox" Grid.Row="1" Grid.Column="0" Height="150"
+            <ListBox x:Name="ParticipantsListBox" Grid.Row="1" Grid.Column="0" Height="110"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
             <Button x:Name="RemoveUserButton" Grid.Row="2" Grid.Column="0" 
@@ -59,7 +59,7 @@
 
             <!-- Benutzer hinzufügen -->
             <TextBlock Grid.Row="0" Grid.Column="2" Text="Benutzer hinzufügen:" Margin="0,0,0,5"/>
-            <ListBox x:Name="AvailableUsersListBox" Grid.Row="1" Grid.Column="2" Height="150"
+            <ListBox x:Name="AvailableUsersListBox" Grid.Row="1" Grid.Column="2" Height="110"
                      DisplayMemberPath="UserName" SelectionChanged="AvailableUsersListBox_SelectionChanged"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
